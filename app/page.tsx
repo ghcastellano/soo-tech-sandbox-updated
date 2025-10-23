@@ -4,7 +4,7 @@ import React, { useState, useRef } from "react"
 import { useCompletion } from "@ai-sdk/react"
 import sdk from "@stackblitz/sdk"
 
-// --- NOVOS ARQUIVOS DE SISTEMA (COM A CORREÇÃO) ---
+// --- NOVOS ARQUIVOS DE SISTEMA (COM A CORREÇÃO NO indexTsx) ---
 
 const indexHtml = `
 <!DOCTYPE html>
@@ -17,22 +17,25 @@ const indexHtml = `
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="index.ts"></script> </body>
+    <script type="module" src="index.ts"></script>
+  </body>
 </html>
 `
 
-// Este será o 'index.ts' (mas o conteúdo é TSX, o que é ok)
+// Este será o 'index.ts' (COM A SINTAXE ANTIGA DO REACTDOM)
 const indexTsx = `
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+import ReactDOM from 'react-dom'; // Import 'react-dom' normal
 import App from './App';
 import './styles.css';
 
-const root = ReactDOM.createRoot(document.getElementById('root')!);
-root.render(
+const rootElement = document.getElementById('root');
+
+ReactDOM.render( // Usa a sintaxe antiga ReactDOM.render
   <React.StrictMode>
     <App />
-  </React.StrictMode>
+  </React.StrictMode>,
+  rootElement
 );
 `
 
@@ -72,7 +75,7 @@ export default function LiveSandbox() {
                 template: "typescript",
                 files: {
                     "index.html": indexHtml,
-                    "index.ts": indexTsx,   // <-- CORREÇÃO AQUI
+                    "index.ts": indexTsx,   // Passa o conteúdo corrigido
                     "styles.css": stylesCss,
                     "App.tsx": appCode,
                 },
