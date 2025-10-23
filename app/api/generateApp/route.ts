@@ -5,7 +5,7 @@ import { streamText } from 'ai';
 
 export const runtime = 'edge';
 
-// O "MASTER PROMPT" (MUITO SIMPLIFICADO)
+// O "MASTER PROMPT" (Simplificado)
 const systemPrompt = `
 Gere APENAS o código-fonte React TypeScript para um componente chamado 'App.tsx' 
 baseado na descrição do usuário. Nenhuma outra explicação ou texto.
@@ -14,26 +14,33 @@ baseado na descrição do usuário. Nenhuma outra explicação ou texto.
 export async function POST(req: Request) {
   const { prompt } = await req.json();
 
-  // 1. Lê a chave secreta com segurança
+  // LOG PARA DEBUG: Ver o que recebemos do frontend
+  console.log("API Recebeu o prompt:", prompt);
+
   const apiKey = process.env.GOOGLE_API_KEY;
   if (!apiKey) {
+    console.error("Erro: Chave de API não encontrada."); // Log de erro
     return new Response('Chave de API do Google não configurada.', { status: 500 });
   }
 
-  // 2. Conecta-se ao Google AI usando a nova SDK
   const google = createGoogleGenerativeAI({
     apiKey: apiKey,
   });
 
-  // 3. Gera a resposta
-  const result = await streamText({
-    model: google('models/gemini-1.5-flash-latest'),
-    system: systemPrompt,
-    prompt: prompt,
-  });
+  try {
+    const result = await streamText({
+      // MUDANÇA: Usando um modelo PRO mais robusto
+      model: google('models/gemini-1.5-pro-latest'), 
+      system: systemPrompt,
+      prompt: prompt,
+    });
 
-  // 4. Envia a resposta de volta para o frontend
-  return result.toTextStreamResponse();
-}
+    // LOG PARA DEBUG: Ver se a chamada da IA foi bem-sucedida (antes de retornar)
+    console.log("Chamada para Gemini bem-sucedida. Iniciando stream...");
 
-export {}; // Mantém a correção para o bug do Vercel
+    return result.toTextStreamResponse();
+
+  } catch (error) {
+    // LOG PARA DEBUG: Capturar erros diretos da chamada da IA
+    console.error("Erro ao chamar a API do Gemini:", error);
+    return new
