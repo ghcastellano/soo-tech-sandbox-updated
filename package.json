@@ -9,12 +9,13 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "next": "16.0.0",
-    "ai": "latest",
-    "@ai-sdk/google": "latest",
-    "@stackblitz/sdk": "latest"
+  "react": "^18.2.0",
+  "react-dom": "^18.2.0",
+  "next": "16.0.0",
+  "ai": "latest",
+  "@ai-sdk/google": "latest",
+  "@ai-sdk/react": "latest",  /* <-- ADICIONE ESTA LINHA */
+  "@stackblitz/sdk": "latest"
   },
   "devDependencies": {
     "typescript": "^5",
