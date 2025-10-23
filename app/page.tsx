@@ -1,7 +1,7 @@
 "use client"; // <-- ESTA É A CORREÇÃO.
 
 import React, { useState, useRef } from "react"
-import { useCompletion } from "ai/react"
+import { useCompletion } from "@ai-sdk/react"
 import sdk from "@stackblitz/sdk"
 
 // --- ARQUIVOS DE SISTEMA PARA O SANDBOX (BOILERPLATE) ---
