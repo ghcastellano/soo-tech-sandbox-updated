@@ -1,12 +1,11 @@
-// Caminho do arquivo: /api/generateApp.ts
+// Caminho: app/api/generateApp/route.ts
 
-import { GoogleGenerativeAIStream, StreamingTextResponse } from 'ai'
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { streamText } from 'ai';
 
-export const runtime = 'edge'
+export const runtime = 'edge';
 
 // O "MASTER PROMPT"
-// Este é o segredo para forçar o Gemini a responder SÓ com código.
 const systemPrompt = `
 Sua tarefa é gerar o código-fonte para um único componente React chamado 'App.tsx' 
 baseado no pedido do usuário.
@@ -31,29 +30,29 @@ export default function App() {
     </div>
   );
 }
-`
+`;
 
 export async function POST(req: Request) {
-    const { prompt } = await req.json()
+  const { prompt } = await req.json();
 
-    // 1. Lê a chave secreta com segurança do ambiente.
-    const apiKey = process.env.GOOGLE_API_KEY
-    
-    if (!apiKey) {
-        return new Response("Chave de API do Google não configurada.", { status: 500 })
-    }
+  // 1. Lê a chave secreta com segurança
+  const apiKey = process.env.GOOGLE_API_KEY;
+  if (!apiKey) {
+    return new Response('Chave de API do Google não configurada.', { status: 500 });
+  }
 
-    // 2. Conecta-se ao Google AI Studio
-    const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash-latest", // "Flash" é mais rápido e barato.
-        systemInstruction: systemPrompt,
-    })
+  // 2. Conecta-se ao Google AI usando a nova SDK
+  const google = createGoogleGenerativeAI({
+    apiKey: apiKey,
+  });
 
-    // 3. Gera a resposta
-    const generationResult = await model.generateContentStream([prompt])
+  // 3. Gera a resposta
+  const result = await streamText({
+    model: google('models/gemini-1.5-flash-latest'),
+    system: systemPrompt,
+    prompt: prompt,
+  });
 
-    // 4. Envia a resposta de volta para o frontend em tempo real
-    const stream = GoogleGenerativeAIStream(generationResult)
-    return new StreamingTextResponse(stream)
+  // 4. Envia a resposta de volta para o frontend
+  return result.toAIStreamResponse();
 }
