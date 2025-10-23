@@ -1,65 +1,240 @@
-import Image from "next/image";
+// Caminho do arquivo: /LiveSandbox.tsx
 
-export default function Home() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+import React, { useState, useRef } from "react"
+import { useCompletion } from "ai/react"
+import sdk from "@stackblitz/sdk"
+
+// --- ARQUIVOS DE SISTEMA PARA O SANDBOX (BOILERPLATE) ---
+// O StackBlitz precisa disso para rodar um app Vite + React + Tailwind
+
+const indexHtml = `
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Prototype</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/index.tsx"></script>
+  </body>
+</html>
+`
+
+const indexTsx = `
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+import './index.css'
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+)
+`
+
+const tailwindConfig = `
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+`
+
+const postcssConfig = `
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+`
+
+const indexCss = `
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+`
+
+const packageJson = `
+{
+  "name": "vite-react-typescript-tailwind-prototype",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.15",
+    "@types/react-dom": "^18.2.7",
+    "@vitejs/plugin-react": "^4.0.3",
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.27",
+    "tailwindcss": "^3.3.3",
+    "typescript": "^5.0.2",
+    "vite": "^4.4.5"
+  }
+}
+`
+
+// --- O COMPONENTE PRINCIPAL QUE VOCÊ VERÁ NO FRAMER ---
+export default function LiveSandbox() {
+    const [isLoading, setIsLoading] = useState(false)
+    const sandboxRef = useRef(null) // Onde o sandbox vai aparecer
+
+    // O hook 'useCompletion' gerencia a chamada para nossa API
+    const { input, handleInputChange, handleSubmit, completion } =
+        useCompletion({
+            // 1. Aponta para o backend que criamos na Fase 2
+            api: "/api/generateApp",
+
+            // 2. Quando a IA terminar de enviar o código...
+            onFinish: (prompt, generatedCode) => {
+                console.log("IA terminou. Gerando o sandbox...")
+                // 3. ...nós o enviamos para o StackBlitz.
+                bootSandbox(generatedCode)
+            },
+        })
+
+    // Função que "inicia" o sandbox do StackBlitz
+    const bootSandbox = (appCode: string) => {
+        if (!sandboxRef.current) return
+
+        sdk.embedProject(
+            sandboxRef.current, // Onde o sandbox vai viver (o <div>)
+            {
+                title: "Protótipo Gerado pela Soo Tech",
+                template: "vite",
+                files: {
+                    // 4. Aqui montamos o "pacote" do projeto
+                    "index.html": indexHtml,
+                    "package.json": packageJson,
+                    "tailwind.config.js": tailwindConfig,
+                    "postcss.config.js": postcssConfig,
+                    "src/index.css": indexCss,
+                    "src/index.tsx": indexTsx,
+                    "src/App.tsx": appCode, // <-- O CÓDIGO DA IA ENTRA AQUI!
+                },
+                settings: {
+                    compile: {
+                        trigger: "auto", // Compila automaticamente
+                        clearConsole: true,
+                    },
+                },
+            },
+            {
+                openFile: "src/App.tsx", // Mostra o código-fonte para o cliente
+                view: "preview", // Mostra o app funcionando (o "ao vivo")
+                height: 500,
+                theme: "dark",
+            }
+        )
+        setIsLoading(false)
+    }
+
+    const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        setIsLoading(true)
+        // Limpa o sandbox antigo antes de criar um novo
+        if (sandboxRef.current) {
+            sandboxRef.current.innerHTML = ""
+        }
+        handleSubmit(e) // Inicia a chamada para a IA
+    }
+
+    // A aparência do componente
+    return (
+        <div
+            style={{ width: "100%", fontFamily: "sans-serif", color: "white" }}
+        >
+            <form onSubmit={onFormSubmit} style={{ marginBottom: "16px" }}>
+                <textarea
+                    value={input}
+                    onChange={handleInputChange}
+                    placeholder="Descreva a interface que você quer prototipar..."
+                    style={textAreaStyle}
+                    disabled={isLoading}
+                />
+                <button type="submit" style={buttonStyle} disabled={isLoading}>
+                    {isLoading
+                        ? "Gerando e Compilando..."
+                        : "Gerar Protótipo ao Vivo"}
+                </button>
+            </form>
+
+            {/* O Sandbox do StackBlitz será injetado aqui */}
+            <div
+                ref={sandboxRef}
+                id="sandbox-container"
+                style={sandboxContainerStyle}
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+                {isLoading && (
+                    <div style={loadingStyle}>
+                        Aguarde... Iniciando servidor virtual e compilando...
+                        <br />
+                        (Isso pode levar até 30 segundos)
+                    </div>
+                )}
+            </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+    )
+}
+
+// Estilos para parecer "tech" (como o resto do seu site)
+const textAreaStyle: React.CSSProperties = {
+    width: "100%",
+    minHeight: "100px",
+    padding: "16px",
+    background: "#151515",
+    color: "#FFFFFF",
+    border: "1px solid #333",
+    borderRadius: "8px",
+    fontFamily: "monospace",
+    fontSize: "14px",
+    boxSizing: "border-box",
+}
+const buttonStyle: React.CSSProperties = {
+    width: "100%",
+    padding: "16px",
+    background: "#3EFF9B", // Seu verde-elétrico
+    color: "#0A0A0A", // Preto
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontSize: "16px",
+    fontWeight: "bold",
+    marginTop: "8px",
+}
+const sandboxContainerStyle: React.CSSProperties = {
+    width: "100%",
+    height: "500px",
+    background: "#0A0A0A",
+    border: "1px solid #333",
+    borderRadius: "8px",
+    overflow: "hidden",
+}
+const loadingStyle: React.CSSProperties = {
+    height: "100%",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    textAlign: "center",
+    color: "#888",
+    fontSize: "14px",
 }
