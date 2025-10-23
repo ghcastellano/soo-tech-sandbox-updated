@@ -1,54 +1,36 @@
-// Caminho do arquivo: /LiveSandbox.tsx
+"use client"; // <-- ESTA É A CORREÇÃO.
 
 import React, { useState, useRef } from "react"
 import { useCompletion } from "ai/react"
 import sdk from "@stackblitz/sdk"
 
 // --- ARQUIVOS DE SISTEMA PARA O SANDBOX (BOILERPLATE) ---
-// O StackBlitz precisa disso para rodar um app Vite + React + Tailwind
-
 const indexHtml = `
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI Prototype</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/index.tsx"></script>
-  </body>
+  <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>AI Prototype</title></head>
+  <body><div id="root"></div><script type="module" src="/src/index.tsx"></script></body>
 </html>
 `
-
 const indexTsx = `
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
-
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>,
 )
 `
-
 const tailwindConfig = `
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
-  theme: {
-    extend: {},
-  },
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  theme: { extend: {} },
   plugins: [],
 }
 `
-
 const postcssConfig = `
 export default {
   plugins: {
@@ -57,28 +39,19 @@ export default {
   },
 }
 `
-
 const indexCss = `
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 `
-
 const packageJson = `
 {
   "name": "vite-react-typescript-tailwind-prototype",
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
-  },
+  "scripts": { "dev": "vite", "build": "tsc && vite build", "preview": "vite preview" },
+  "dependencies": { "react": "^18.2.0", "react-dom": "^18.2.0" },
   "devDependencies": {
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
@@ -91,55 +64,41 @@ const packageJson = `
   }
 }
 `
+// --- FIM DO BOILERPLATE ---
 
-// --- O COMPONENTE PRINCIPAL QUE VOCÊ VERÁ NO FRAMER ---
 export default function LiveSandbox() {
     const [isLoading, setIsLoading] = useState(false)
-    const sandboxRef = useRef(null) // Onde o sandbox vai aparecer
+    const sandboxRef = useRef<HTMLDivElement>(null)
 
-    // O hook 'useCompletion' gerencia a chamada para nossa API
-    const { input, handleInputChange, handleSubmit, completion } =
-        useCompletion({
-            // 1. Aponta para o backend que criamos na Fase 2
-            api: "/api/generateApp",
+    const { input, handleInputChange, handleSubmit } = useCompletion({
+        api: "/api/generateApp",
+        onFinish: (prompt, generatedCode) => {
+            console.log("IA terminou. Gerando o sandbox...")
+            bootSandbox(generatedCode)
+        },
+    })
 
-            // 2. Quando a IA terminar de enviar o código...
-            onFinish: (prompt, generatedCode) => {
-                console.log("IA terminou. Gerando o sandbox...")
-                // 3. ...nós o enviamos para o StackBlitz.
-                bootSandbox(generatedCode)
-            },
-        })
-
-    // Função que "inicia" o sandbox do StackBlitz
     const bootSandbox = (appCode: string) => {
         if (!sandboxRef.current) return
-
         sdk.embedProject(
-            sandboxRef.current, // Onde o sandbox vai viver (o <div>)
+            sandboxRef.current,
             {
                 title: "Protótipo Gerado pela Soo Tech",
                 template: "vite",
                 files: {
-                    // 4. Aqui montamos o "pacote" do projeto
                     "index.html": indexHtml,
                     "package.json": packageJson,
                     "tailwind.config.js": tailwindConfig,
                     "postcss.config.js": postcssConfig,
                     "src/index.css": indexCss,
                     "src/index.tsx": indexTsx,
-                    "src/App.tsx": appCode, // <-- O CÓDIGO DA IA ENTRA AQUI!
+                    "src/App.tsx": appCode,
                 },
-                settings: {
-                    compile: {
-                        trigger: "auto", // Compila automaticamente
-                        clearConsole: true,
-                    },
-                },
+                settings: { compile: { trigger: "auto", clearConsole: true } },
             },
             {
-                openFile: "src/App.tsx", // Mostra o código-fonte para o cliente
-                view: "preview", // Mostra o app funcionando (o "ao vivo")
+                openFile: "src/App.tsx",
+                view: "preview",
                 height: 500,
                 theme: "dark",
             }
@@ -150,18 +109,14 @@ export default function LiveSandbox() {
     const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         setIsLoading(true)
-        // Limpa o sandbox antigo antes de criar um novo
         if (sandboxRef.current) {
             sandboxRef.current.innerHTML = ""
         }
-        handleSubmit(e) // Inicia a chamada para a IA
+        handleSubmit(e)
     }
 
-    // A aparência do componente
     return (
-        <div
-            style={{ width: "100%", fontFamily: "sans-serif", color: "white" }}
-        >
+        <div style={{ width: "100%", fontFamily: "sans-serif", color: "white", background: "#0A0A0A", padding: "20px" }}>
             <form onSubmit={onFormSubmit} style={{ marginBottom: "16px" }}>
                 <textarea
                     value={input}
@@ -171,22 +126,14 @@ export default function LiveSandbox() {
                     disabled={isLoading}
                 />
                 <button type="submit" style={buttonStyle} disabled={isLoading}>
-                    {isLoading
-                        ? "Gerando e Compilando..."
-                        : "Gerar Protótipo ao Vivo"}
+                    {isLoading ? "Gerando e Compilando..." : "Gerar Protótipo ao Vivo"}
                 </button>
             </form>
-
-            {/* O Sandbox do StackBlitz será injetado aqui */}
-            <div
-                ref={sandboxRef}
-                id="sandbox-container"
-                style={sandboxContainerStyle}
-            >
+            <div ref={sandboxRef} id="sandbox-container" style={sandboxContainerStyle}>
                 {isLoading && (
                     <div style={loadingStyle}>
                         Aguarde... Iniciando servidor virtual e compilando...
-                        <br />
+                        <br/>
                         (Isso pode levar até 30 segundos)
                     </div>
                 )}
@@ -195,46 +142,23 @@ export default function LiveSandbox() {
     )
 }
 
-// Estilos para parecer "tech" (como o resto do seu site)
+// Estilos
 const textAreaStyle: React.CSSProperties = {
-    width: "100%",
-    minHeight: "100px",
-    padding: "16px",
-    background: "#151515",
-    color: "#FFFFFF",
-    border: "1px solid #333",
-    borderRadius: "8px",
-    fontFamily: "monospace",
-    fontSize: "14px",
-    boxSizing: "border-box",
+    width: "100%", minHeight: "100px", padding: "16px", background: "#151515",
+    color: "#FFFFFF", border: "1px solid #333", borderRadius: "8px",
+    fontFamily: "monospace", fontSize: "14px", boxSizing: "border-box",
 }
 const buttonStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "16px",
-    background: "#3EFF9B", // Seu verde-elétrico
-    color: "#0A0A0A", // Preto
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontSize: "16px",
-    fontWeight: "bold",
-    marginTop: "8px",
+    width: "100%", padding: "16px", background: "#3EFF9B", color: "#0A0A0A",
+    border: "none", borderRadius: "8px", cursor: "pointer",
+    fontSize: "16px", fontWeight: "bold", marginTop: "8px",
 }
 const sandboxContainerStyle: React.CSSProperties = {
-    width: "100%",
-    height: "500px",
-    background: "#0A0A0A",
-    border: "1px solid #333",
-    borderRadius: "8px",
-    overflow: "hidden",
+    width: "100%", height: "500px", background: "#0A0A0A",
+    border: "1px solid #333", borderRadius: "8px", overflow: "hidden",
 }
 const loadingStyle: React.CSSProperties = {
-    height: "100%",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    textAlign: "center",
-    color: "#888",
-    fontSize: "14px",
+    height: "100%", display: "flex", flexDirection: "column",
+    alignItems: "center", justifyContent: "center", textAlign: "center",
+    color: "#888", fontSize: "14px",
 }
