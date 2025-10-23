@@ -4,10 +4,7 @@ import React, { useState, useRef } from "react"
 import { useCompletion } from "@ai-sdk/react"
 import sdk from "@stackblitz/sdk"
 
-// --- NOVOS ARQUIVOS DE SISTEMA (MUITO MAIS SIMPLES) ---
-
-// O template "typescript" do StackBlitz já vem com React e ReactDOM.
-// Só precisamos fornecer os arquivos de entrada.
+// --- NOVOS ARQUIVOS DE SISTEMA (COM A CORREÇÃO) ---
 
 const indexHtml = `
 <!DOCTYPE html>
@@ -20,17 +17,16 @@ const indexHtml = `
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="index.tsx"></script>
-  </body>
+    <script type="module" src="index.ts"></script> </body>
 </html>
 `
 
-// Este será o 'index.tsx' (note o 'index.tsx' no NÍVEL RAIZ)
+// Este será o 'index.ts' (mas o conteúdo é TSX, o que é ok)
 const indexTsx = `
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App'; // Importa o App local
-import './styles.css'; // Importa o CSS local
+import App from './App';
+import './styles.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root')!);
 root.render(
@@ -40,7 +36,6 @@ root.render(
 );
 `
 
-// CSS global simples, já que não temos Tailwind
 const stylesCss = `
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
@@ -74,17 +69,16 @@ export default function LiveSandbox() {
             sandboxRef.current,
             {
                 title: "Protótipo Gerado pela Soo Tech",
-                template: "typescript", // <-- O TEMPLATE CORRETO
+                template: "typescript",
                 files: {
-                    // Arquivos no NÍVEL RAIZ que o template espera
                     "index.html": indexHtml,
-                    "index.tsx": indexTsx,   // <-- ARQUIVO DE ENTRADA CORRETO
-                    "styles.css": stylesCss, // <-- CSS CORRETO
-                    "App.tsx": appCode,    // <-- O CÓDIGO DA IA
+                    "index.ts": indexTsx,   // <-- CORREÇÃO AQUI
+                    "styles.css": stylesCss,
+                    "App.tsx": appCode,
                 },
             },
             {
-                openFile: "App.tsx", // Abre o código da IA
+                openFile: "App.tsx",
                 view: "preview",
                 height: 500,
                 theme: "dark",
