@@ -14,12 +14,11 @@ baseado na descrição do usuário. Nenhuma outra explicação ou texto.
 export async function POST(req: Request) {
   const { prompt } = await req.json();
 
-  // LOG PARA DEBUG: Ver o que recebemos do frontend
-  console.log("API Recebeu o prompt:", prompt);
+  console.log("API Recebeu o prompt:", prompt); // Mantendo o log
 
   const apiKey = process.env.GOOGLE_API_KEY;
   if (!apiKey) {
-    console.error("Erro: Chave de API não encontrada."); // Log de erro
+    console.error("Erro: Chave de API não encontrada.");
     return new Response('Chave de API do Google não configurada.', { status: 500 });
   }
 
@@ -29,21 +28,18 @@ export async function POST(req: Request) {
 
   try {
     const result = await streamText({
-      // Usando modelo PRO mais robusto
-      model: google('models/gemini-1.5-pro-latest'),
+      // MUDANÇA: Voltando para o modelo FLASH
+      model: google('models/gemini-1.5-flash-latest'), 
       system: systemPrompt,
       prompt: prompt,
     });
 
-    // LOG PARA DEBUG: Ver se a chamada da IA foi bem-sucedida
-    console.log("Chamada para Gemini bem-sucedida. Iniciando stream...");
+    console.log("Chamada para Gemini bem-sucedida. Iniciando stream..."); // Mantendo o log
 
     return result.toTextStreamResponse();
 
   } catch (error) {
-    // LOG PARA DEBUG: Capturar erros diretos da chamada da IA
     console.error("Erro ao chamar a API do Gemini:", error);
-    // CORREÇÃO AQUI: Completar o new Response()
     return new Response(`Erro ao chamar a API do Gemini: ${(error as Error).message}`, { status: 500 });
   }
 }
