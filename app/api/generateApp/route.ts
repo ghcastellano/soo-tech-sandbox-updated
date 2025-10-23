@@ -5,31 +5,10 @@ import { streamText } from 'ai';
 
 export const runtime = 'edge';
 
-// O "MASTER PROMPT"
+// O "MASTER PROMPT" (MUITO SIMPLIFICADO)
 const systemPrompt = `
-Sua tarefa é gerar o código-fonte para um único componente React chamado 'App.tsx' 
-baseado no pedido do usuário.
-
-REGRAS:
-1.  Use React, TypeScript e Tailwind CSS.
-2.  O código DEVE ser 100% autônomo.
-3.  NÃO inclua NENHUMA explicação, NENHUM markdown ('\`\`\`'), 
-    NENHUM comando 'npm install'.
-4.  Responda APENAS com o código-fonte puro.
-
-Exemplo de Pedido: "uma landing page com um título e um botão"
-Sua Resposta (e NADA MAIS):
-import React from 'react';
-export default function App() {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
-      <h1 className="text-4xl font-bold mb-4">Bem-vindo ao Nosso Site</h1>
-      <button className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700">
-        Começar
-      </button>
-    </div>
-  );
-}
+Gere APENAS o código-fonte React TypeScript para um componente chamado 'App.tsx' 
+baseado na descrição do usuário. Nenhuma outra explicação ou texto.
 `;
 
 export async function POST(req: Request) {
@@ -57,4 +36,4 @@ export async function POST(req: Request) {
   return result.toTextStreamResponse();
 }
 
-export {}; // <-- ESTA É A CORREÇÃO MÁGICA
+export {}; // Mantém a correção para o bug do Vercel
