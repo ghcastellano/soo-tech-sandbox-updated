@@ -54,5 +54,5 @@ export async function POST(req: Request) {
   });
 
   // 4. Envia a resposta de volta para o frontend
-  return result.toAIStreamResponse();
+  return result.toTextStreamResponse();
 }
