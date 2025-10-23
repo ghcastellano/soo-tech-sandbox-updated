@@ -28,8 +28,8 @@ export async function POST(req: Request) {
 
   try {
     const result = await streamText({
-      // MUDANÇA: Voltando para o modelo FLASH
-      model: google('models/gemini-1.5-flash-latest'), 
+      // MUDANÇA: Usando o modelo gemini-pro mais antigo
+      model: google('models/gemini-pro'), 
       system: systemPrompt,
       prompt: prompt,
     });
