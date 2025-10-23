@@ -53,6 +53,6 @@ export async function POST(req: Request) {
     prompt: prompt,
   });
 
-  // 4. Envia a resposta de volta para o frontend
-  return result.toTextStreamResponse();
+  // 4. Envia a resposta de volta para o frontend (COM A CORREÇÃO)
+  return result.toTextStreamResponse(); // <-- ESTA É A LINHA CORRIGIDA
 }
