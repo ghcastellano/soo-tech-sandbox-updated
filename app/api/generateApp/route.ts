@@ -8,7 +8,7 @@ export const runtime = 'edge';
 // O "MASTER PROMPT" (Simplificado)
 const systemPrompt = `
 Gere APENAS o código-fonte React TypeScript para um componente chamado 'App.tsx' 
-baseado na descrição do usuário. Nenhuma outra explicação ou texto.
+baseado na descrição do usuário. Nenhuma outra explicação ou texto .
 `;
 
 export async function POST(req: Request) {
