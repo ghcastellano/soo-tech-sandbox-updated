@@ -58,13 +58,29 @@ export default function LiveSandbox() {
     const [isLoading, setIsLoading] = useState(false)
     const sandboxRef = useRef<HTMLDivElement>(null)
 
-    const { input, handleInputChange, handleSubmit } = useCompletion({
-        api: "/api/generateApp",
-        onFinish: (prompt, generatedCode) => {
-            console.log("IA terminou. Gerando o sandbox...")
-            bootSandbox(generatedCode)
-        },
-    })
+    // Modifique o useCompletion para ficar assim:
+const { input, handleInputChange, handleSubmit } = useCompletion({
+    api: "/api/generateApp",
+    onFinish: (prompt, generatedCode) => {
+        // LOG PARA VER O QUE RECEBEMOS
+        console.log("Código recebido da API:", generatedCode); 
+
+        if (generatedCode && generatedCode.trim().length > 0) {
+            console.log("Gerando o sandbox...");
+            bootSandbox(generatedCode);
+        } else {
+            console.error("Erro: Código gerado está vazio!");
+            setIsLoading(false); // Para o loading
+            alert("Erro: A IA não retornou um código válido. Tente novamente ou verifique o console.");
+        }
+    },
+    onError: (error) => {
+        // LOG PARA VER ERROS DA API
+        console.error("Erro ao chamar a API:", error);
+        setIsLoading(false); // Para o loading
+        alert(`Erro ao comunicar com a IA: ${error.message}. Verifique o console.`);
+    }
+})
 
     const bootSandbox = (appCode: string) => {
         if (!sandboxRef.current) return
