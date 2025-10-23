@@ -84,7 +84,7 @@ export default function LiveSandbox() {
             sandboxRef.current,
             {
                 title: "Protótipo Gerado pela Soo Tech",
-                template: "javascript", // <-- ESTA É A LINHA CORRIGIDA
+                template: "typescript", // <-- ESTA É A LINHA CORRIGIDA
                 files: {
                     "index.html": indexHtml,
                     "package.json": packageJson,
