@@ -1,4 +1,4 @@
-"use client"; // <-- ESTA É A CORREÇÃO.
+"use client";
 
 import React, { useState, useRef } from "react"
 import { useCompletion } from "@ai-sdk/react"
@@ -84,7 +84,7 @@ export default function LiveSandbox() {
             sandboxRef.current,
             {
                 title: "Protótipo Gerado pela Soo Tech",
-                template: "vite",
+                template: "javascript", // <-- ESTA É A LINHA CORRIGIDA
                 files: {
                     "index.html": indexHtml,
                     "package.json": packageJson,
