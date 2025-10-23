@@ -29,13 +29,13 @@ export async function POST(req: Request) {
 
   try {
     const result = await streamText({
-      // MUDANÇA: Usando um modelo PRO mais robusto
-      model: google('models/gemini-1.5-pro-latest'), 
+      // Usando modelo PRO mais robusto
+      model: google('models/gemini-1.5-pro-latest'),
       system: systemPrompt,
       prompt: prompt,
     });
 
-    // LOG PARA DEBUG: Ver se a chamada da IA foi bem-sucedida (antes de retornar)
+    // LOG PARA DEBUG: Ver se a chamada da IA foi bem-sucedida
     console.log("Chamada para Gemini bem-sucedida. Iniciando stream...");
 
     return result.toTextStreamResponse();
@@ -43,4 +43,9 @@ export async function POST(req: Request) {
   } catch (error) {
     // LOG PARA DEBUG: Capturar erros diretos da chamada da IA
     console.error("Erro ao chamar a API do Gemini:", error);
-    return new
+    // CORREÇÃO AQUI: Completar o new Response()
+    return new Response(`Erro ao chamar a API do Gemini: ${(error as Error).message}`, { status: 500 });
+  }
+}
+
+export {}; // Mantém a correção para o bug do Vercel
