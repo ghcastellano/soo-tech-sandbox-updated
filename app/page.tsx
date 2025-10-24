@@ -186,7 +186,7 @@ export default function SolutionBlueprintGenerator() {
                 )}
                  {/* Mensagem Inicial (Apenas se não estiver carregando E não tiver resultado E não tiver erro) */}
                  {showInitialMessage && (
-                      <div style={styles.loading}>Seu Blueprint Estratégico aparecerá aqui.</div>
+                      <div style={styles.loading}>Seu Blueprint Estratégico aparecerá aqui .</div>
                  )}
             </div>
         </div>
