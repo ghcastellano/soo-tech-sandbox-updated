@@ -5,34 +5,56 @@ import { streamText } from 'ai';
 
 export const runtime = 'edge';
 
-// --- MASTER PROMPT v4 (Blueprint Estratégico) ---
+// --- MASTER PROMPT v5 (Foco em HTML Blueprint) ---
 const systemPrompt = `
-Você é um Arquiteto de Soluções Sênior da Soo Tech, especialista em transformar desafios de negócios em soluções inovadoras usando IA, dados e engenharia de software customizada.
-Sua tarefa é analisar o desafio ou objetivo de negócio descrito pelo usuário e gerar um **Blueprint Estratégico de Solução de IA** conciso e de alto nível.
+Você é um Arquiteto de Soluções Sênior da Soo Tech. Sua tarefa é gerar um **arquivo HTML único e autônomo** que funcione como um **Blueprint Estratégico** visualmente atraente, baseado na descrição do desafio do usuário.
 
-**Diretrizes de Geração:**
+**Diretrizes:**
 
-1.  **Análise Focada:** Interprete o problema sob a ótica das especialidades da Soo Tech (Desenvolvimento de Produtos, Dados & Analytics, Soluções de IA, Outsourcing de especialistas).
-2.  **Formato de Saída:** Responda **APENAS** em formato **Markdown**, utilizando exatamente os seguintes cabeçalhos de seção (sem numeração, use ##):
-    * \`## Diagnóstico do Desafio\`
-    * \`## Visão da Solução Soo Tech\`
-    * \`## Pilares Tecnológicos Sugeridos\`
-    * \`## Inteligência de Dados Essencial\`
-    * \`## Impacto Potencial no Negócio\`
-    * \`## Expertise Soo Tech Recomendada\`
-    * \`## Próximos Passos com a Soo Tech\`
-3.  **Conteúdo:** Conciso, estratégico, profissional. Use termos técnicos corretamente, mas explique o valor. Sugira tecnologias modernas (Cloud, Python/Node, React/Vue, Power BI, etc.).
-4.  **SAÍDA:** Responda **APENAS** com o Markdown estruturado. Sem introduções, saudações, ou texto fora dos cabeçalhos definidos.
-5.  **Tom:** Consultor Sênior - Confiante, experiente, focado em solução e valor.
-6.  **Alinhamento Core:** Certifique-se que a solução proposta reflita as capacidades da Soo Tech.
-7.  **CTA na Seção "Próximos Passos com a Soo Tech":** Esta seção é MANDATÓRIA no final. Use um texto similar a este:
-    "Este blueprint inicial demonstra o potencial de uma solução customizada. A Soo Tech possui vasta experiência em desafios semelhantes, aplicando IA e análise de dados para gerar resultados comprovados. Quer transformar este conceito em realidade e impulsionar seu negócio? **[Fale com nossos especialistas](mailto:contato@sootech.com?subject=Interesse%20Blueprint:%20[Desafio%20do%20Cliente])** para agendar uma conversa estratégica." 
-    *(Adapte o link mailto ou use um link para a página de contato se preferir)*
+1.  **Formato:** Gere um documento HTML5 completo, \`<!DOCTYPE html>...</html>\`.
+2.  **Estilização (CSS na Tag <style>):**
+    * **Tema:** Tema escuro obrigatório (fundo: #0A0A0A, cards: #151515, texto: #E0E0E0).
+    * **Cores Soo Tech:** Use \`#3EFF9B\` (verde) para títulos (h2) e links, e \`#00CFFF\` (ciano) para destaques (como \`<code>\`).
+    * **Layout:** Use CSS Flexbox ou Grid para organizar as seções do blueprint de forma limpa e moderna. Deve ser responsivo.
+    * **Tipografia:** Use fontes sans-serif (system-ui, Arial).
+3.  **Estrutura do Conteúdo:** A IA deve gerar o HTML para as seguintes seções (baseadas no prompt anterior):
+    * \`<h2>Diagnóstico do Desafio\`
+    * \`<h2>Visão da Solução Soo Tech\`
+    * \`<h2>Pilares Tecnológicos Sugeridos\`
+    * \`<h2>Inteligência de Dados Essencial\`
+    * \`<h2>Impacto Potencial no Negócio\`
+    * \`<h2>Expertise Soo Tech Recomendada\`
+    * \`<h2>Próximos Passos com a Soo Tech\` (Deve incluir um link \`mailto:contato@sootech.com\` formatado)
+4.  **Interatividade:** Adicione JavaScript MÍNIMO (em tags \`<script>\`) apenas para efeitos sutis (ex: hover), se necessário.
+5.  **SAÍDA ESTRITA:** Responda **APENAS** com o código HTML. Sem explicações ou markdown \`\`\`.
 
-**Exemplo:** ## Diagnóstico do Desafio
-... (exemplo completo) ...
-## Próximos Passos com a Soo Tech
-... (exemplo completo) ...
+**Exemplo de Resposta (e NADA MAIS):**
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soo Tech Blueprint</title>
+    <style>
+        body { font-family: system-ui, sans-serif; background-color: #0A0A0A; color: #E0E0E0; margin: 0; padding: 30px; }
+        h2 { color: #3EFF9B; border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 30px; font-size: 1.6rem; }
+        ul { list-style-type: '→ '; padding-left: 20px; }
+        li { margin-bottom: 10px; line-height: 1.6; color: #BDBDBD; }
+        p { line-height: 1.7; color: #BDBDBD; }
+        code { background-color: rgba(0, 207, 255, 0.1); color: #00CFFF; padding: 3px 6px; border-radius: 4px; font-family: monospace; }
+        a { color: #3EFF9B; text-decoration: none; font-weight: bold; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <h2>Diagnóstico do Desafio</h2>
+    <p>Descrição do problema do cliente...</p>
+    <h2>Visão da Solução Soo Tech</h2>
+    <p>Nossa proposta de solução...</p>
+    <h2>Próximos Passos com a Soo Tech</h2>
+    <p>Este blueprint inicial demonstra o potencial de uma solução customizada. A Soo Tech possui vasta experiência em desafios semelhantes. Quer transformar este conceito em realidade? <a href="mailto:contato@sootech.com">Fale com nossos especialistas</a>.</p>
+</body>
+</html>
 `;
 // --- FIM DO MASTER PROMPT ---
 
@@ -42,19 +64,18 @@ export async function POST(req: Request) {
 
   try {
     const { prompt } = await req.json();
-    console.log(`[${timestamp}] [API] Prompt recebido: ${prompt ? `"${prompt.substring(0, 80)}..."` : "VAZIO"}`);
-
-    if (!prompt || prompt.trim().length === 0) {
-        console.error(`[${timestamp}] [API] Erro: Prompt vazio.`);
-        return new Response('Por favor, descreva seu desafio de negócio.', { status: 400 });
+    if (!prompt) {
+      console.error(`[${timestamp}] [API] Erro: Prompt vazio.`);
+      return new Response('Prompt não pode ser vazio.', { status: 400 });
     }
+    console.log(`[${timestamp}] [API] Prompt recebido: "${prompt.substring(0, 50)}..."`);
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       console.error(`[${timestamp}] [API] Erro Fatal: OPENAI_API_KEY não configurada.`);
-      return new Response('Erro interno do servidor [API Key Missing]. Por favor, contate o suporte.', { status: 500 });
+      return new Response('Erro interno do servidor [API Key Missing].', { status: 500 });
     }
-    console.log(`[${timestamp}] [API] Chave API OpenAI encontrada (verificada).`);
+    console.log(`[${timestamp}] [API] Chave API OpenAI encontrada.`);
 
     const openai = createOpenAI({ apiKey: apiKey });
     console.log(`[${timestamp}] [API] Cliente OpenAI inicializado.`);
@@ -63,24 +84,18 @@ export async function POST(req: Request) {
     const result = await streamText({
       model: openai('gpt-4o-mini'),
       system: systemPrompt,
-      prompt: `Analise este desafio de negócio e gere o blueprint: ${prompt}`,
-      // Callback onFinish CORRIGIDO
-      onFinish: ({ text, usage, finishReason }) => {
-        // Log simplificado para evitar erro de tipo
-        console.log(`[${timestamp}] [API] streamText: onFinish - Geração concluída. Razão: ${finishReason}.`); 
-        // Se precisar dos tokens, logue o objeto 'usage' inteiro para investigar:
-        // console.log(`[${timestamp}] [API] streamText: onFinish - Usage details:`, usage); 
+      prompt: `Analise este desafio de negócio e gere o blueprint HTML: ${prompt}`,
+      onFinish: ({ text }) => {
+        console.log(`[${timestamp}] [API] streamText: onFinish. Tamanho final: ${text.length}`);
       }
     });
-    console.log(`[${timestamp}] [API] Chamada para OpenAI bem-sucedida. Retornando stream...`);
-
+    console.log(`[${timestamp}] [API] Chamada para OpenAI bem-sucedida. Retornando stream.`);
+    
     return result.toTextStreamResponse();
 
   } catch (error) {
     console.error(`[${timestamp}] [API] ERRO NO BLOCO TRY/CATCH:`, error);
     const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
-    const errorDetails = (error as any)?.data || (error as any)?.cause || error; 
-    console.error(`[${timestamp}] [API] Detalhes do Erro:`, JSON.stringify(errorDetails, null, 2));
     return new Response(`Erro interno ao processar a requisição: ${errorMessage}`, { status: 500 });
   }
 }
