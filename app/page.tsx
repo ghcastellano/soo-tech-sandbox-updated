@@ -98,7 +98,7 @@ export default function SolutionBlueprintGenerator() {
         <div style={styles.container}>
             <h2 style={styles.title}>Diagnóstico Inteligente Soo Tech</h2>
             <p style={styles.description}>
-                Descreva seu desafio ou objetivo de negócio. Nossa IA analisará e gerará um **Blueprint Estratégico** de como a Soo Tech pode ajudar a transformar essa questão em resultados tangíveis, ao vivo.
+                Descreva seu desafio ou objetivo de negócio. Nossa IA analisará e gerará um Blueprint Estratégico de como a Soo Tech pode ajudar a transformar essa questão em resultados tangíveis, ao vivo.
             </p>
 
             <form onSubmit={onFormSubmit} style={{ width: '100%', maxWidth: '800px', margin: '0 auto 40px auto' }}>
