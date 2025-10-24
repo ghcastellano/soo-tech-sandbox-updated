@@ -5,7 +5,7 @@ import { useCompletion } from "@ai-sdk/react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-// --- Componentes de Estilização para Markdown (Mantidos) ---
+// --- Componentes de Estilização para Markdown ---
 const components = {
     h2: ({node, ...props}: any) => <h2 style={styles.h2} {...props} />,
     ul: ({node, ...props}: any) => <ul style={styles.ul} {...props} />,
@@ -24,7 +24,7 @@ const components = {
 };
 // --- Fim dos Componentes de Estilização ---
 
-// --- ESTILOS MODERNIZADOS (Definição ÚNICA e Correta) ---
+// --- ESTILOS MODERNIZADOS ---
 const styles = {
     container: { width: "100%", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif", color: "#E0E0E0", background: "#050505", padding: "40px 50px", boxSizing: 'border-box', minHeight: '100vh' } as React.CSSProperties,
     title: { color: "#FFFFFF", fontSize: "clamp(1.5rem, 4vw, 2.2rem)", fontWeight: 700, marginBottom: "15px", textAlign: 'center' } as React.CSSProperties,
@@ -68,6 +68,8 @@ export default function SolutionBlueprintGenerator() {
     console.log(`[${new Date().toISOString()}] [Frontend] Renderizando...`);
 
     const [errorState, setErrorState] = useState<string | null>(null); // Erro para exibir na UI
+    // Estado para verificar se uma submissão foi feita e a resposta foi vazia
+    const [submittedAndEmpty, setSubmittedAndEmpty] = useState(false); 
 
     const {
         input,
@@ -75,56 +77,60 @@ export default function SolutionBlueprintGenerator() {
         handleSubmit,
         completion,
         isLoading,
-        error: hookError, // Erro retornado pelo hook
+        error: hookError,
         stop,
     } = useCompletion({
         api: "/api/generateApp",
-        // REMOVIDO: onResponse (não existe mais)
-        onFinish: ({ completion: finalCompletion } = {}) => {
-            console.log(`[${new Date().toISOString()}] [Frontend] useCompletion: onFinish. Completion final: ${finalCompletion?.length ?? 0} chars.`);
-            if (!finalCompletion || finalCompletion.trim().length === 0) {
-                 console.warn(`[${new Date().toISOString()}] [Frontend] useCompletion: onFinish - Completion final VAZIO.`);
-                 // Considera isso um erro se não houver erro de API já reportado
-                 if (!hookError) {
-                    setErrorState("A IA concluiu, mas não gerou um blueprint. Tente refazer o prompt.");
-                 }
-            }
-        },
+        initialInput: "",
+        // REMOVIDO onFinish
         onError: (error) => {
-             // O estado 'hookError' será atualizado, o useEffect abaixo tratará disso
              console.error(`[${new Date().toISOString()}] [Frontend] useCompletion: onError capturou:`, error);
+             setErrorState(`Erro na comunicação: ${error.message}`); // Atualiza o erro visível
         },
     });
 
-     // Loga mudanças importantes e atualiza o erro da UI
+     // Loga mudanças e atualiza erro da UI a partir do hook
      useEffect(() => { console.log(`[${new Date().toISOString()}] [Frontend] useEffect[isLoading]: Mudou para ${isLoading}`); }, [isLoading]);
      useEffect(() => { if (completion) console.log(`[${new Date().toISOString()}] [Frontend] useEffect[completion]: Atualizado. Tamanho: ${completion.length}.`); }, [completion]);
      useEffect(() => {
          if (hookError) {
              console.error(`[${new Date().toISOString()}] [Frontend] useEffect[hookError]: Erro detectado:`, hookError);
-             setErrorState(`Erro na comunicação com a IA: ${hookError.message}`); // Atualiza o erro visível
-         } else {
-             // Limpa o erro visível se o hook não tiver mais erro (ex: nova tentativa bem-sucedida)
-              // Comentado para evitar limpar o erro de "completion vazio" do onFinish
-             // if (errorState && errorState.startsWith("Erro na comunicação")) {
-             //    setErrorState(null);
-             // }
+             setErrorState(hookError.message);
          }
+         // Não limpamos o erro aqui automaticamente
      }, [hookError]);
+
+    // Novo useEffect para detectar o caso de "terminou, mas vazio"
+    useEffect(() => {
+        // Se a API não está carregando, E nós tínhamos submetido (input não está vazio na submissão original),
+        // E o completion atual É vazio, E NÃO há erro de API
+        if (!isLoading && !completion && input && !hookError && submittedAndEmpty) {
+             console.warn(`[${new Date().toISOString()}] [Frontend] useEffect[completion vazio pós-submit]: Detectado completion vazio após submissão.`);
+             setErrorState("A IA concluiu, mas não gerou um blueprint. Tente refazer o prompt ou verifique os logs do Vercel.");
+        }
+         // Limpa o estado submittedAndEmpty se o carregamento terminar (para a próxima submissão)
+         if (!isLoading) {
+             setSubmittedAndEmpty(false);
+         }
+
+    }, [isLoading, completion, input, hookError, submittedAndEmpty]);
 
 
     const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        console.log(`[${new Date().toISOString()}] [Frontend] handleFormSubmit: Submetendo com input: "${input}"`);
-        setErrorState(null); // Limpa erros antigos antes de submeter
-        handleSubmit(e);
+        const currentInput = input.trim();
+        console.log(`[${new Date().toISOString()}] [Frontend] handleFormSubmit: Submetendo com input: "${currentInput}"`);
+        setErrorState(null); // Limpa erros antigos
+        setSubmittedAndEmpty(true); // Marca que submetemos
+        handleSubmit(e); // Chama a função do hook
     };
 
     // Lógica de renderização
     const showLoading = isLoading;
     const hasCompletionContent = completion && completion.trim().length > 0;
     const showResult = hasCompletionContent;
-    const displayError = errorState; // Usamos nosso estado local agora
-    const showInitialMessage = !isLoading && !hasCompletionContent && !displayError;
+    const displayError = errorState; // Usamos nosso estado local
+    // Ajuste: Mensagem inicial só aparece se NADA aconteceu ainda
+    const showInitialMessage = !isLoading && !hasCompletionContent && !displayError && !submittedAndEmpty; 
 
     console.log(`[${new Date().toISOString()}] [Frontend] Status Renderização: isLoading=${isLoading}, hasCompletionContent=${hasCompletionContent}, displayError=${displayError ? `"${displayError}"` : 'null'}`);
 
@@ -152,8 +158,6 @@ export default function SolutionBlueprintGenerator() {
              {displayError && (
                  <div style={styles.error}>
                      <strong>Erro:</strong> {displayError}
-                     <br/>
-                     <small>(Verifique os logs do Vercel ou tente novamente)</small>
                  </div>
              )}
 
@@ -174,6 +178,10 @@ export default function SolutionBlueprintGenerator() {
                 )}
                  {showInitialMessage && (
                       <div style={styles.loading}>Seu Blueprint Estratégico aparecerá aqui.</div>
+                 )}
+                  {/* Mensagem se terminou vazio, mas SÓ se não for a carga inicial e não houver outro erro */}
+                 {!isLoading && !hasCompletionContent && !displayError && submittedAndEmpty && (
+                      <div style={styles.loading}>A IA concluiu, mas não gerou um blueprint para este prompt. Tente ser mais específico.</div>
                  )}
             </div>
         </div>
