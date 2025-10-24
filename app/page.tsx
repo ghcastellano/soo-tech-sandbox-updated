@@ -1,22 +1,91 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import sdk from "@stackblitz/sdk"; // Apenas o SDK é necessário
+import sdk from "@stackblitz/sdk";
 
-// --- ARQUIVOS DE SISTEMA (Sem mudanças) ---
-const indexHtml = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>AI Prototype</title><link rel="stylesheet" href="styles.css"></head><body><div id="root"></div><script type="module" src="index.ts"></script></body></html>`;
-const indexTsx = `import React from 'react';\nimport ReactDOM from 'react-dom';\nimport App from './App';\nimport './styles.css';\n\nconst rootElement = document.getElementById('root');\n\nReactDOM.render(<App />, rootElement);`;
-const stylesCss = `body { font-family: sans-serif; background-color: #1e1e1e; color: white; margin: 0; padding: 0; } #root { padding: 1rem; }`;
+// --- ARQUIVOS DE SISTEMA PARA O TEMPLATE 'create-react-app' ---
+// (Estes são os mesmos de antes, corretos para CRA)
+const indexHtmlCRA = `
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>React App Prototype</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+  </body>
+</html>
+`;
+
+const indexTsxCRA = `
+import React from 'react';
+import ReactDOM from 'react-dom/client'; // CRA usa createRoot
+import './index.css';
+import App from './App';
+
+const root = ReactDOM.createRoot(
+  document.getElementById('root') as HTMLElement
+);
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+`;
+
+const indexCssCRA = `
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #282c34;
+  color: white;
+}
+#root { padding: 20px; }
+code { font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace; }
+`;
+
+const packageJsonCRA = `
+{
+  "name": "react-ts-cra-prototype",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@types/node": "^16.7.13",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
+    "typescript": "^4.4.2",
+    "web-vitals": "^2.1.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": { "extends": ["react-app", "react-app/jest"] },
+  "browserslist": {
+    "production": [">0.2%", "not dead", "not op_mini all"],
+    "development": ["last 1 chrome version", "last 1 firefox version", "last 1 safari version"]
+  }
+}
+`;
 // --- FIM DOS ARQUIVOS DE SISTEMA ---
 
 export default function LiveSandbox() {
     const [input, setInput] = useState("");
     const latestCodeRef = useRef<string | null>(null);
     const [isLoadingAPI, setIsLoadingAPI] = useState(false);
-    // Não precisamos mais do estado isBootingSandbox
     const [error, setError] = useState<string | null>(null);
-    // Não precisamos mais da ref do sandbox
-    // const sandboxRef = useRef<HTMLDivElement>(null);
     const [submissionTrigger, setSubmissionTrigger] = useState(0);
 
     // Função Fetch Manual (sem mudanças)
@@ -58,60 +127,56 @@ export default function LiveSandbox() {
     const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const currentInput = input.trim();
-        if (!currentInput || isLoadingAPI) return; // Removido isBootingSandbox
+        if (!currentInput || isLoadingAPI) return;
         fetchGeneratedCode(currentInput);
     };
 
     // useEffect para ABRIR o Sandbox
     useEffect(() => {
-        // Roda APENAS se o fetch terminou E o trigger foi incrementado
         if (submissionTrigger > 0 && !isLoadingAPI) {
             const currentCode = latestCodeRef.current;
             console.log("useEffect pós-fetch ativado. Código na Ref:", currentCode);
 
             if (currentCode && currentCode.trim().length > 0) {
                  console.log("Código válido detectado na Ref. Abrindo projeto no StackBlitz...");
-                 openSandbox(currentCode); // Chama a função para ABRIR
+                 openSandbox(currentCode);
              } else if (!error) {
                  console.error("Erro: Código final vazio na Ref após fetch bem-sucedido.");
                  setError("A IA respondeu, mas o código final está vazio.");
              }
-            // Não precisamos mais de hasBootedRef ou setIsBootingSandbox
         }
-    }, [submissionTrigger, isLoadingAPI, error]); // Dependências corretas
+    }, [submissionTrigger, isLoadingAPI, error]);
 
-    // Função openSandbox (NOVA FUNÇÃO usando sdk.openProject)
+    // Função openSandbox (usando template 'create-react-app' e estrutura CRA)
     const openSandbox = (appCode: string) => {
-        console.log("Chamando sdk.openProject...");
+        console.log("Chamando sdk.openProject com template create-react-app...");
         try {
             sdk.openProject(
                 {
                     title: "Protótipo Gerado pela Soo Tech",
-                    template: "typescript", // Mantemos typescript, pois funcionou com o boilerplate
+                    template: "create-react-app", // <-- TEMPLATE CORRETO PARA REACT+TS+JSX
                     files: {
-                        "index.html": indexHtml,
-                        "index.ts": indexTsx,
-                        "styles.css": stylesCss,
-                        "App.tsx": appCode, // Código da IA
+                        // Estrutura de arquivos esperada pelo CRA template
+                        "public/index.html": indexHtmlCRA,
+                        "src/index.tsx": indexTsxCRA,
+                        "src/index.css": indexCssCRA,
+                        "src/App.tsx": appCode,      // Código da IA vai para src/
+                        "package.json": packageJsonCRA, // package.json específico do CRA
                     },
                 },
                 {
-                    // Opções para abrir em nova aba
                     newWindow: true,
-                    openFile: "App.tsx",
+                    openFile: "src/App.tsx", // Abre o arquivo principal na pasta src
                 }
             );
-            console.log("sdk.openProject chamado com sucesso (nova aba deve abrir).");
+            console.log("sdk.openProject chamado com sucesso.");
         } catch (err: any) {
             console.error("Erro ao chamar sdk.openProject:", err);
             setError(`Erro ao tentar abrir o ambiente: ${err.message}`);
         }
     };
 
-    // Estado geral de loading (APENAS API)
-    const isOverallLoading = isLoadingAPI;
-
-    // Interface (JSX - Simplificada, sem container do sandbox)
+    // Interface (JSX - sem mudanças)
     return (
         <div style={{ width: "100%", fontFamily: "sans-serif", color: "white", background: "#0A0A0A", padding: "20px" }}>
             <form onSubmit={onFormSubmit} style={{ marginBottom: "16px" }}>
@@ -120,31 +185,26 @@ export default function LiveSandbox() {
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="Descreva a interface que você quer prototipar..."
                     style={textAreaStyle}
-                    disabled={isOverallLoading}
+                    disabled={isLoadingAPI}
                 />
-                <button type="submit" style={buttonStyle} disabled={isOverallLoading || !input.trim()}>
-                    {/* Texto do botão simplificado */}
-                    {isOverallLoading ? "Gerando Código..." : "Gerar Protótipo (Nova Aba)"}
+                <button type="submit" style={buttonStyle} disabled={isLoadingAPI || !input.trim()}>
+                    {isLoadingAPI ? "Gerando Código..." : "Gerar Protótipo (Nova Aba)"}
                 </button>
             </form>
 
              {error && ( <div style={errorStyle}><strong>Erro:</strong> {error}</div> )}
 
-             {/* REMOVEMOS o <div> do sandboxRef */}
-
-             {/* Adiciona uma mensagem indicando que abrirá em nova aba */}
-             {!isOverallLoading && !error && (
+             {!isLoadingAPI && !error && (
                  <div style={{...loadingStyle, position: 'static', height: 'auto', marginTop: '20px'}}>
-                     O protótipo será aberto em uma nova aba do navegador.
+                     O protótipo será aberto em uma nova aba.
                  </div>
              )}
         </div>
     )
 }
 
-// Estilos (mantidos)
+// Estilos
 const textAreaStyle: React.CSSProperties = { width: "100%", minHeight: "100px", padding: "16px", background: "#151515", color: "#FFFFFF", border: "1px solid #333", borderRadius: "8px", fontFamily: "monospace", fontSize: "14px", boxSizing: "border-box" };
 const buttonStyle: React.CSSProperties = { width: "100%", padding: "16px", background: "#3EFF9B", color: "#0A0A0A", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "16px", fontWeight: "bold", marginTop: "8px" };
-// const sandboxContainerStyle: React.CSSProperties = { /* ... Não é mais necessário ... */ };
-const loadingStyle: React.CSSProperties = { /* position, top, left etc removidos */ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", color: "#888", fontSize: "14px" };
+const loadingStyle: React.CSSProperties = { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", color: "#888", fontSize: "14px" };
 const errorStyle: React.CSSProperties = { color: 'red', marginBottom: '10px', whiteSpace: 'pre-wrap', border: '1px solid red', padding: '10px', borderRadius: '4px', background: '#2a0000' };
