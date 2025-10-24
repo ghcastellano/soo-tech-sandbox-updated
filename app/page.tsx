@@ -81,20 +81,19 @@ export default function LiveSandbox() {
         }
     }, [submissionTrigger, isLoadingAPI, error]);
 
-    // Função bootSandbox (COM A LINHA EXTRA REMOVIDA)
+    // Função bootSandbox (COM A CORREÇÃO setIsLoading -> setIsLoadingAPI)
     const bootSandbox = (appCode: string) => {
         if (!sandboxRef.current) {
             console.error("Referência do Sandbox não encontrada no bootSandbox");
-            setIsLoading(false); // Garante que paramos o loading se a ref sumir
+            setIsLoadingAPI(false); // <-- CORREÇÃO AQUI
             setIsBootingSandbox(false);
             setError("Erro interno: Não foi possível encontrar o container do sandbox.");
             return;
         };
 
-        // A chamada correta e única:
         sdk.embedProject(
-            sandboxRef.current, // O elemento DOM
-            { // Configurações do Projeto
+            sandboxRef.current,
+            {
                 title: "Protótipo Gerado pela Soo Tech",
                 template: "typescript",
                 files: {
@@ -104,7 +103,7 @@ export default function LiveSandbox() {
                     "App.tsx": appCode,
                 },
             },
-            { // Opções de Embed
+            {
                 openFile: "App.tsx",
                 view: "preview",
                 height: 500,
@@ -117,9 +116,10 @@ export default function LiveSandbox() {
         ).then(() => {
             console.log("Sandbox iniciado com sucesso.");
             setIsBootingSandbox(false);
+            // Não resetamos isLoadingAPI aqui, pois o fetch já terminou
         }).catch((err) => {
              console.error("Erro ao iniciar o StackBlitz:", err);
-             setIsLoadingAPI(false);
+             setIsLoadingAPI(false); // Garante reset em caso de erro no StackBlitz
              setIsBootingSandbox(false);
              setError(`Erro ao iniciar o ambiente: ${err.message}`);
         });
@@ -161,7 +161,7 @@ export default function LiveSandbox() {
     )
 }
 
-// Estilos
+// Estilos (mantidos)
 const textAreaStyle: React.CSSProperties = { width: "100%", minHeight: "100px", padding: "16px", background: "#151515", color: "#FFFFFF", border: "1px solid #333", borderRadius: "8px", fontFamily: "monospace", fontSize: "14px", boxSizing: "border-box" };
 const buttonStyle: React.CSSProperties = { width: "100%", padding: "16px", background: "#3EFF9B", color: "#0A0A0A", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "16px", fontWeight: "bold", marginTop: "8px" };
 const sandboxContainerStyle: React.CSSProperties = { width: "100%", height: "500px", background: "#0A0A0A", border: "1px solid #333", borderRadius: "8px", overflow: "hidden", position: 'relative' };
