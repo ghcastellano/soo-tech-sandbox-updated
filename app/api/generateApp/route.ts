@@ -5,8 +5,7 @@ import { streamText } from 'ai';
 
 export const runtime = 'edge';
 
-// --- NOVO MASTER PROMPT v4 ---
-// Foco em Gerar um Blueprint Estratégico em Markdown
+// --- MASTER PROMPT v4 - Blueprint Estratégico ---
 const systemPrompt = `
 Você é um Arquiteto de Soluções Sênior da Soo Tech, especialista em transformar desafios de negócios em soluções inovadoras usando IA, dados e engenharia de software customizada.
 Sua tarefa é analisar o desafio ou objetivo de negócio descrito pelo usuário e gerar um **Blueprint Estratégico de Solução de IA** conciso e de alto nível.
@@ -15,12 +14,12 @@ Sua tarefa é analisar o desafio ou objetivo de negócio descrito pelo usuário 
 
 1.  **Análise e Reenquadramento:** Entenda a dor ou a oportunidade do cliente e reescreva-a brevemente em termos de potencial de solução tecnológica.
 2.  **Formato de Saída:** Responda **APENAS** em formato **Markdown**, utilizando exatamente os seguintes cabeçalhos de seção (sem numeração, use ##):
-    * ## Diagnóstico do Desafio
-    * ## Proposta de Solução (Alto Nível)
-    * ## Componentes Tecnológicos Chave
-    * ## Fontes de Dados Potenciais
-    * ## Impacto Estimado no Negócio
-    * ## Perfil de Expertise Recomendado
+    * \`## Diagnóstico do Desafio\`
+    * \`## Proposta de Solução (Alto Nível)\`
+    * \`## Componentes Tecnológicos Chave\`
+    * \`## Fontes de Dados Potenciais\`
+    * \`## Impacto Estimado no Negócio\`
+    * \`## Perfil de Expertise Recomendado\`
 3.  **Conteúdo:**
     * Seja **conciso e estratégico**. Evite jargões excessivos, mas use termos técnicos corretos.
     * Sugira tecnologias e abordagens **modernas e relevantes** (Python, cloud platforms como AWS/GCP/Azure, frameworks modernos, bancos de dados apropriados, modelos de ML relevantes).
@@ -63,35 +62,45 @@ Implementar um sistema de recuperação de carrinho abandonado baseado em IA, qu
 - Desenvolvedor(a) Backend
 - Especialista em BI/Visualização de Dados
 `;
-// --- FIM DO NOVO MASTER PROMPT ---
+// --- FIM DO MASTER PROMPT ---
 
 export async function POST(req: Request) {
-  const { prompt } = await req.json();
-  console.log("API Recebeu o prompt para Blueprint:", prompt);
-
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    console.error("Erro: Chave de API da OpenAI não encontrada.");
-    return new Response('Chave de API da OpenAI não configurada.', { status: 500 });
-  }
-
-  const openai = createOpenAI({ apiKey: apiKey });
+  console.log("[API /api/generateApp] Recebida requisição POST.");
 
   try {
+    const { prompt } = await req.json();
+    console.log("[API /api/generateApp] Prompt recebido:", prompt);
+
+    if (!prompt) {
+      console.error("[API /api/generateApp] Erro: Prompt vazio.");
+      return new Response('Prompt não pode ser vazio.', { status: 400 });
+    }
+
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      console.error("[API /api/generateApp] Erro: OPENAI_API_KEY não configurada.");
+      return new Response('Chave de API da OpenAI não configurada.', { status: 500 });
+    }
+    console.log("[API /api/generateApp] Chave API OpenAI encontrada.");
+
+    const openai = createOpenAI({ apiKey: apiKey });
+    console.log("[API /api/generateApp] Cliente OpenAI inicializado.");
+
+    console.log("[API /api/generateApp] Chamando streamText com gpt-4o-mini.");
     const result = await streamText({
-      // Recomendo GPT-4o para esta tarefa mais complexa
-      model: openai('gpt-4o'), 
-      // model: openai('gpt-4o-mini'), // Pode testar este se o custo for preocupação
+      model: openai('gpt-4o-mini'),
       system: systemPrompt,
-      prompt: `Analise este desafio de negócio e gere o blueprint: ${prompt}`, // Contextualiza
-      // maxTokens: 1500, // Pode precisar ajustar
+      prompt: `Analise este desafio de negócio e gere o blueprint: ${prompt}`,
     });
-    console.log("Chamada para OpenAI (Blueprint) bem-sucedida.");
+    console.log("[API /api/generateApp] Chamada para OpenAI bem-sucedida. Retornando stream.");
     return result.toTextStreamResponse();
+
   } catch (error) {
-    console.error("Erro ao chamar a API da OpenAI para Blueprint:", error);
+    console.error("[API /api/generateApp] ERRO CAPTURADO:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
-    return new Response(`Erro ao chamar a API da OpenAI: ${errorMessage}`, { status: 500 });
+    const errorDetails = (error as any)?.data || (error as any)?.cause;
+    console.error("[API /api/generateApp] Detalhes do Erro:", errorDetails);
+    return new Response(`Erro interno ao processar a requisição: ${errorMessage}`, { status: 500 });
   }
 }
 
