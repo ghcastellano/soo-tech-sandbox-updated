@@ -1,86 +1,100 @@
 // Caminho: app/api/generateApp/route.ts
 
-import { createOpenAI } from '@ai-sdk/openai'; // Importa a SDK correta
+import { createOpenAI } from '@ai-sdk/openai';
 import { streamText } from 'ai';
 
 export const runtime = 'edge';
 
-// O "MASTER PROMPT" (Ajustado para GPT e sem Tailwind)
+// --- NOVO MASTER PROMPT ---
+// Mais detalhado para guiar a IA para um resultado melhor
 const systemPrompt = `
-Sua tarefa é gerar o código-fonte para um único componente React chamado 'App.tsx' 
-baseado na descrição do usuário.
+Você é um desenvolvedor frontend React experiente. Sua tarefa é gerar o código-fonte COMPLETO e AUTÔNOMO para um único componente React chamado 'App.tsx' baseado na descrição do usuário.
 
-REGRAS:
-1.  Use React, TypeScript e estilos inline (inline styles). NÃO use classes Tailwind.
-2.  O código DEVE ser 100% autônomo.
-3.  NÃO inclua NENHUMA explicação, NENHUM markdown ('\`\`\`'), 
-    NENHUM comando 'npm install'.
-4.  Responda APENAS com o código-fonte puro.
+REGRAS ESSENCIAIS:
+1.  **Tecnologia:** Use React e TypeScript.
+2.  **Estilização:** Use **APENAS estilos inline (inline styles)**. NÃO use CSS externo, CSS Modules ou Tailwind. Crie objetos de estilo JavaScript para clareza.
+3.  **Layout:** Tente usar Flexbox para criar layouts responsivos básicos quando apropriado.
+4.  **Autonomia:** O código deve funcionar sozinho. NÃO inclua imports de arquivos que não existem, placeholders como "// Adicione sua lógica aqui", ou dependências externas não padrão do React.
+5.  **SAÍDA PURA:** Responda **APENAS** com o código-fonte do componente 'App.tsx'. Nenhuma outra palavra, explicação, markdown (como \`\`\`), ou comandos.
 
-Exemplo de Pedido: "uma landing page com um título e um botão"
+Exemplo de Pedido: "uma landing page simples com título, parágrafo e botão"
 Sua Resposta (e NADA MAIS):
 import React from 'react';
+
 export default function App() {
-  const containerStyle = {
-    display: 'flex', flexDirection: 'column', alignItems: 'center', 
-    justifyContent: 'center', minHeight: '100vh', 
-    backgroundColor: '#111', color: 'white', padding: '20px'
+  const containerStyle: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '100vh',
+    backgroundColor: '#282c34', // Fundo escuro
+    color: 'white',
+    padding: '40px',
+    textAlign: 'center'
   };
-  const buttonStyle = {
-    padding: '10px 20px', backgroundColor: '#007bff', color: 'white', 
-    border: 'none', borderRadius: '5px', cursor: 'pointer'
+  const titleStyle: React.CSSProperties = {
+    fontSize: 'calc(10px + 2vmin)', // Tamanho responsivo
+    marginBottom: '20px'
   };
+  const paragraphStyle: React.CSSProperties = {
+     marginBottom: '30px',
+     maxWidth: '600px',
+     lineHeight: '1.6'
+  };
+  const buttonStyle: React.CSSProperties = {
+    padding: '12px 24px',
+    fontSize: '1rem',
+    backgroundColor: '#61dafb', // Azul React
+    color: '#282c34',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    transition: 'background-color 0.2s ease'
+  };
+
   return (
     <div style={containerStyle}>
-      <h1 style={{ fontSize: '2.5rem', marginBottom: '20px' }}>Bem-vindo ao Nosso Site</h1>
-      <button style={buttonStyle}>
-        Começar
+      <h1 style={titleStyle}>Bem-vindo ao Protótipo</h1>
+      <p style={paragraphStyle}>Este é um exemplo simples gerado por IA.</p>
+      <button style={buttonStyle} onClick={() => alert('Clicou!')}>
+        Clique Aqui
       </button>
     </div>
   );
 }
 `;
+// --- FIM DO NOVO MASTER PROMPT ---
 
 export async function POST(req: Request) {
   const { prompt } = await req.json();
-
   console.log("API Recebeu o prompt:", prompt);
 
-  // 1. Lê a chave secreta da OpenAI do ambiente
   const apiKey = process.env.OPENAI_API_KEY;
-
   if (!apiKey) {
     console.error("Erro: Chave de API da OpenAI não encontrada.");
     return new Response('Chave de API da OpenAI não configurada.', { status: 500 });
   }
 
-  // 2. Conecta-se à OpenAI usando a SDK
-  const openai = createOpenAI({
-    apiKey: apiKey,
-  });
+  const openai = createOpenAI({ apiKey: apiKey });
 
   try {
     const result = await streamText({
-      // 3. Usa um modelo GPT (gpt-3.5-turbo é rápido e barato)
-      model: openai('gpt-3.5-turbo'),
+      // --- MUDANÇA DE MODELO (Escolha UM): ---
+      // model: openai('gpt-3.5-turbo'),     // Rápido e Barato (Qualidade Básica)
+      model: openai('gpt-4o-mini'),       // Bom Equilíbrio (Recomendado para começar)
+      // model: openai('gpt-4o'),           // Melhor Qualidade (Custo Maior)
+      // ------------------------------------
       system: systemPrompt,
       prompt: prompt,
-      // Opcional: Adicionar limites para segurança e custo
-      // maxTokens: 1000, 
     });
-
     console.log("Chamada para OpenAI bem-sucedida. Iniciando stream...");
-
-    // 4. Retorna a resposta para o frontend
     return result.toTextStreamResponse();
-
   } catch (error) {
     console.error("Erro ao chamar a API da OpenAI:", error);
-    // Adapta a mensagem de erro para TS entender 'error' como tipo 'any' ou 'Error'
     const errorMessage = error instanceof Error ? error.message : String(error);
     return new Response(`Erro ao chamar a API da OpenAI: ${errorMessage}`, { status: 500 });
   }
 }
 
-// Mantém a exportação vazia para compatibilidade com Vercel/Next.js
 export {};
