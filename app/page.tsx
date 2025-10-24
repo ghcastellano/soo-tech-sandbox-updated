@@ -1,30 +1,29 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-// Não precisamos mais do StackBlitz SDK ou useCompletion
-
-// --- ARQUIVOS DE SISTEMA (Boilerplate básico, não usado diretamente) ---
-const indexHtml = `<!DOCTYPE html><html><head><title>Protótipo</title></head><body><div id="root"></div><script type="module" src="index.ts"></script></body></html>`;
-const indexTsx = `import React from 'react';\nimport ReactDOM from 'react-dom';\nimport App from './App';\nconst root = document.getElementById('root');\nReactDOM.render(<App />, root);`;
-const stylesCss = `body { margin: 0; font-family: sans-serif; }`;
-// --- FIM DOS ARQUIVOS DE SISTEMA ---
+import React, { useState, useRef } from "react";
+// Nenhuma biblioteca de AI SDK ou Markdown é necessária aqui
+// ATENÇÃO: Se você vir 'react-markdown' aqui, delete a linha.
+// ATENÇÃO: Se você vir 'useCompletion' aqui, delete a linha.
+// ATENÇÃO: Se você vir '@ai-sdk/react' aqui, delete a linha.
+// O código abaixo é 100% autônomo com 'fetch'.
 
 export default function LiveSandbox() {
     const [input, setInput] = useState("");
     const [generatedHtml, setGeneratedHtml] = useState<string | null>(null);
     const [isLoadingAPI, setIsLoadingAPI] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [submissionTimestamp, setSubmissionTimestamp] = useState<number | null>(null); // Para controlar estado inicial
+    const [submissionTimestamp, setSubmissionTimestamp] = useState<number | null>(null);
 
-    // Função Fetch Manual (sem mudanças na lógica de fetch)
+    // Função Fetch Manual
     const fetchGeneratedHtml = async (prompt: string) => {
         setIsLoadingAPI(true);
         setError(null);
-        setGeneratedHtml(null); // Limpa o HTML anterior
-        setSubmissionTimestamp(Date.now()); // Marca o início da submissão
+        setGeneratedHtml(null); 
+        setSubmissionTimestamp(Date.now()); 
         console.log(`[${new Date().toISOString()}] [Frontend] Iniciando fetch para /api/generateApp (HTML) com prompt:`, prompt);
+
         try {
-            const response = await fetch('/api/generateApp', { // A API é a mesma
+            const response = await fetch('/api/generateApp', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }),
             });
             console.log(`[${new Date().toISOString()}] [Frontend] Resposta da API recebida, status: ${response.status}`);
@@ -37,12 +36,14 @@ export default function LiveSandbox() {
             const decoder = new TextDecoder();
             let htmlAccumulator = "";
             console.log(`[${new Date().toISOString()}] [Frontend] Lendo stream...`);
+
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) { console.log(`[${new Date().toISOString()}] [Frontend] Stream finalizada.`); break; }
                 htmlAccumulator += decoder.decode(value, { stream: true });
-                // Atualiza o estado a cada chunk para efeito de streaming
-                setGeneratedHtml(htmlAccumulator); 
+                
+                // A LINHA QUE CAUSAVA O FLICKER FOI REMOVIDA DAQUI
+                // setGeneratedHtml(htmlAccumulator); 
             }
 
             console.log(`[${new Date().toISOString()}] [Frontend] HTML final acumulado (${htmlAccumulator.length} chars).`);
@@ -57,23 +58,23 @@ export default function LiveSandbox() {
                 cleanedHtml = cleanedHtml.substring(3, cleanedHtml.length - 3).trim();
             }
 
-            // Validação final
+            // Validação final e renderização de UMA SÓ VEZ
             if (cleanedHtml && cleanedHtml.trim().toLowerCase().startsWith('<!doctype html')) {
-                console.log(`[${new Date().toISOString()}] [Frontend] HTML Válido detectado.`);
-                setGeneratedHtml(cleanedHtml); // Define o estado com o HTML limpo
+                console.log(`[${new Date().toISOString()}] [Frontend] HTML Válido detectado. Atualizando estado de uma vez.`);
+                setGeneratedHtml(cleanedHtml); // Define o estado com o HTML completo
             } else {
-                console.error(`[${new Date().toISOString()}] [Frontend] Erro: Resposta não é HTML válido. Início:`, cleanedHtml.substring(0, 100));
-                setError("A IA respondeu, mas o formato do HTML é inválido.");
-                setGeneratedHtml(null);
+                 console.error(`[${new Date().toISOString()}] [Frontend] Erro: Resposta não é HTML válido. Início:`, cleanedHtml.substring(0, 100));
+                 setError("A IA respondeu, mas o formato do HTML é inválido.");
+                 setGeneratedHtml(null);
             }
 
         } catch (err: any) {
             console.error(`[${new Date().toISOString()}] [Frontend] Erro durante o fetch:`, err);
             setError(err.message || "Erro desconhecido ao buscar blueprint.");
         } finally {
-            setIsLoadingAPI(false);
+            setIsLoadingAPI(false); // Finaliza o loading da API
             console.log(`[${new Date().toISOString()}] [Frontend] Fetch finalizado.`);
-            setSubmissionTimestamp(prev => (prev || 0) + 1); // Dispara o useEffect para renderizar (ou mostrar erro)
+            // O submissionTimestamp já foi setado, não precisa de outro trigger
         }
     };
 
@@ -87,10 +88,12 @@ export default function LiveSandbox() {
     // Lógica de renderização
     const showLoading = isLoadingAPI;
     const hasHtmlContent = generatedHtml && generatedHtml.trim().length > 0;
-    const showResult = hasHtmlContent;
+    const showResult = !isLoadingAPI && hasHtmlContent; // Só mostra resultado se NÃO estiver carregando
     const displayError = error;
     const showInitialMessage = !isLoadingAPI && !hasHtmlContent && !displayError && !submissionTimestamp;
-    
+    const showEmptyStatePostSubmit = !isLoadingAPI && !hasHtmlContent && !displayError && submissionTimestamp;
+
+
     return (
         <div style={styles.container}>
             <h2 style={styles.title}>Diagnóstico Inteligente Soo Tech</h2>
@@ -115,36 +118,41 @@ export default function LiveSandbox() {
              {error && ( <div style={styles.error}><strong>Erro:</strong> {error}</div> )}
 
             <div style={styles.blueprintContainer}>
-                {/* O iframe só será renderizado se tiver conteúdo HTML */}
-                {showResult ? (
+                {/* O iframe só será renderizado se NÃO estiver carregando E tiver HTML válido */}
+                {showResult && (
                     <iframe
                         srcDoc={generatedHtml || ""} // Injeta o HTML
                         style={styles.iframe}
-                        // --- CORREÇÃO AQUI ---
-                        // Removido 'allow-same-origin'. Adicionado 'allow-forms'.
-                        sandbox="allow-scripts allow-forms allow-modals" 
+                        sandbox="allow-scripts allow-forms allow-modals" // Permite JS básico e modais
                         title="Protótipo Gerado por IA"
                     />
-                ) : (
-                    // Mostra o loading ou a mensagem inicial
+                )}
+                
+                {/* Mostra o loading */}
+                {showLoading && (
                     <div style={styles.loading}>
-                        {isLoadingAPI ? (
-                            <>
-                                <svg aria-hidden="true" style={styles.spinner} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path></svg>
-                                Analisando seu desafio e construindo a solução...
-                                <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-                            </>
-                        ) : (
-                            submissionTimestamp ? "Falha ao gerar blueprint. Verifique os logs e tente novamente." : "Seu Blueprint Estratégico personalizado aparecerá aqui."
-                        )}
+                        <svg aria-hidden="true" style={styles.spinner} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path></svg>
+                        Analisando seu desafio e construindo a solução...
+                        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
                     </div>
                 )}
+                
+                {/* Mensagem Inicial */}
+                {showInitialMessage && (
+                     <div style={styles.loading}>Seu Blueprint Estratégico personalizado aparecerá aqui.</div>
+                )}
+
+                {/* Mensagem se terminou vazio */}
+                {showEmptyStatePostSubmit && !error && (
+                      <div style={styles.loading}>A IA respondeu, mas o blueprint gerado estava vazio. Tente refazer o prompt.</div>
+                 )}
             </div>
         </div>
     )
 }
 
 // --- ESTILOS FINAIS ---
+// Copie e cole seu objeto 'styles' completo aqui
 const styles = {
     container: { width: "100%", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif", color: "#E0E0E0", background: "#050505", padding: "40px 5vw", boxSizing: 'border-box', minHeight: '100vh' } as React.CSSProperties,
     title: { color: "#FFFFFF", fontSize: "clamp(1.8rem, 5vw, 2.5rem)", fontWeight: 600, marginBottom: "15px", textAlign: 'center' } as React.CSSProperties,
@@ -169,9 +177,9 @@ const styles = {
         border: "1px solid #222",
         borderRadius: "12px",
         marginTop: '40px',
-        minHeight: '500px',
+        minHeight: '500px', // Altura mínima
         boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
-        overflow: 'hidden',
+        overflow: 'hidden', // Para conter o iframe
         position: 'relative'
     } as React.CSSProperties,
     iframe: {
@@ -179,7 +187,7 @@ const styles = {
         height: '100%', // O 'minHeight' do container vai definir a altura
         minHeight: '500px', 
         border: 'none',
-        display: 'block'
+        display: 'block' // Remove espaço extra
     } as React.CSSProperties,
     loading: { 
         position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
