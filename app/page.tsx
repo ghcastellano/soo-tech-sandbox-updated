@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react"; // Import useRef
+import React, { useState, useEffect, useRef } from "react";
 import { useCompletion } from "@ai-sdk/react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-// --- COMPONENTES DE ESTILIZAÇÃO PARA MARKDOWN (Definidos dentro do objeto styles abaixo) ---
+// --- Componentes de Estilização para Markdown (Mantidos) ---
 const components = {
     h2: ({node, ...props}: any) => <h2 style={styles.h2} {...props} />,
     ul: ({node, ...props}: any) => <ul style={styles.ul} {...props} />,
@@ -22,116 +22,7 @@ const components = {
     strong: ({node, ...props}: any) => <strong style={styles.strong} {...props} />,
     a: ({node, ...props}: any) => <a style={styles.link} target="_blank" rel="noopener noreferrer" {...props} />,
 };
-// --- FIM DOS COMPONENTES DE ESTILIZAÇÃO ---
-
-
-export default function SolutionBlueprintGenerator() {
-    console.log(`[${new Date().toISOString()}] [Frontend] Renderizando SolutionBlueprintGenerator...`);
-
-    const [errorState, setErrorState] = useState<string | null>(null);
-
-    const {
-        input,
-        handleInputChange,
-        handleSubmit,
-        completion,
-        isLoading,
-        error: hookError,
-        stop,
-    } = useCompletion({
-        api: "/api/generateApp",
-        onResponse: (response) => {
-            console.log(`[${new Date().toISOString()}] [Frontend] useCompletion: onResponse - Status: ${response.status}`);
-            if (!response.ok) {
-                console.error(`[${new Date().toISOString()}] [Frontend] useCompletion: onResponse - Erro: ${response.statusText}`);
-                setErrorState(`Erro da API: ${response.status} ${response.statusText}`);
-            } else {
-                 setErrorState(null);
-            }
-        },
-        onFinish: ({ completion: finalCompletion } = {}) => { // Use destructured param if available
-            console.log(`[${new Date().toISOString()}] [Frontend] useCompletion: onFinish chamado. Completion final tem ${finalCompletion?.length ?? 0} caracteres.`);
-            if (!finalCompletion || finalCompletion.trim().length === 0) {
-                 console.warn(`[${new Date().toISOString()}] [Frontend] useCompletion: onFinish - Completion final está VAZIO.`);
-            }
-        },
-        onError: (error) => {
-             console.error(`[${new Date().toISOString()}] [Frontend] useCompletion: onError capturou:`, error);
-             setErrorState(`Erro na comunicação: ${error.message}`);
-        },
-    });
-
-     // Loga mudanças importantes
-     useEffect(() => { console.log(`[${new Date().toISOString()}] [Frontend] useEffect[isLoading]: Mudou para ${isLoading}`); }, [isLoading]);
-     useEffect(() => { console.log(`[${new Date().toISOString()}] [Frontend] useEffect[completion]: Atualizado. Tamanho: ${completion?.length ?? 0}.`); }, [completion]);
-     useEffect(() => { if (hookError) { console.error(`[${new Date().toISOString()}] [Frontend] useEffect[hookError]: Erro:`, hookError); setErrorState(hookError.message); } }, [hookError]);
-
-    const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        console.log(`[${new Date().toISOString()}] [Frontend] handleFormSubmit: Submetendo com input: "${input}"`);
-        setErrorState(null);
-        handleSubmit(e);
-    };
-
-    // Lógica de renderização
-    const showLoading = isLoading;
-    const hasCompletionContent = completion && completion.trim().length > 0;
-    const showResult = hasCompletionContent;
-    const displayError = errorState || (hookError?.message);
-    const showInitialMessage = !isLoading && !hasCompletionContent && !displayError;
-
-    console.log(`[${new Date().toISOString()}] [Frontend] Status Renderização: isLoading=${isLoading}, hasCompletionContent=${hasCompletionContent}, displayError=${displayError ? `"${displayError}"` : 'null'}`);
-
-    return (
-        <div style={styles.container}>
-            <h2 style={styles.title}>Soo Tech AI Solution Pathfinder</h2>
-            <p style={styles.description}>
-                Descreva seu desafio ou objetivo de negócio. Nossa IA analisará e gerará um Blueprint Estratégico para uma solução de ponta, ao vivo.
-            </p>
-
-            <form onSubmit={handleFormSubmit} style={{ width: '100%', marginBottom: "25px" }}>
-                <textarea
-                    value={input}
-                    onChange={handleInputChange}
-                    placeholder="Ex: 'Reduzir churn de clientes B2B', 'Otimizar rotas de entrega', 'Prever demanda de estoque'..."
-                    style={styles.textArea}
-                    disabled={isLoading}
-                    rows={4}
-                />
-                <button type="submit" style={isLoading || !input.trim() ? {...styles.button, ...styles.buttonDisabled} : styles.button} disabled={isLoading || !input.trim()}>
-                    {isLoading ? "Analisando e Gerando Blueprint..." : "Gerar Blueprint de Solução"}
-                </button>
-            </form>
-
-             {displayError && (
-                 <div style={styles.error}>
-                     <strong>Erro ao gerar blueprint:</strong> {displayError}
-                     <br/>
-                     <small>(Verifique os logs do Vercel ou tente novamente)</small>
-                 </div>
-             )}
-
-            <div style={styles.blueprintContainer}>
-                {showLoading && !showResult && (
-                    <div style={styles.loading}>
-                         <svg aria-hidden="true" style={styles.spinner} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path></svg>
-                        Analisando seu desafio e construindo a solução...
-                        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-                    </div>
-                )}
-                {showResult && (
-                    <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        components={components}
-                        children={completion}
-                    />
-                )}
-                 {showInitialMessage && (
-                      <div style={styles.loading}>Seu Blueprint Estratégico aparecerá aqui.</div>
-                 )}
-            </div>
-        </div>
-    )
-}
+// --- Fim dos Componentes de Estilização ---
 
 // --- ESTILOS MODERNIZADOS (Definição ÚNICA e Correta) ---
 const styles = {
@@ -172,3 +63,121 @@ const styles = {
     link: { color: '#00CFFF', textDecoration: 'none', borderBottom: '1px dotted #00CFFF', transition: 'color 0.2s' } as React.CSSProperties,
 };
 // --- FIM DOS ESTILOS ---
+
+export default function SolutionBlueprintGenerator() {
+    console.log(`[${new Date().toISOString()}] [Frontend] Renderizando...`);
+
+    const [errorState, setErrorState] = useState<string | null>(null); // Erro para exibir na UI
+
+    const {
+        input,
+        handleInputChange,
+        handleSubmit,
+        completion,
+        isLoading,
+        error: hookError, // Erro retornado pelo hook
+        stop,
+    } = useCompletion({
+        api: "/api/generateApp",
+        // REMOVIDO: onResponse (não existe mais)
+        onFinish: ({ completion: finalCompletion } = {}) => {
+            console.log(`[${new Date().toISOString()}] [Frontend] useCompletion: onFinish. Completion final: ${finalCompletion?.length ?? 0} chars.`);
+            if (!finalCompletion || finalCompletion.trim().length === 0) {
+                 console.warn(`[${new Date().toISOString()}] [Frontend] useCompletion: onFinish - Completion final VAZIO.`);
+                 // Considera isso um erro se não houver erro de API já reportado
+                 if (!hookError) {
+                    setErrorState("A IA concluiu, mas não gerou um blueprint. Tente refazer o prompt.");
+                 }
+            }
+        },
+        onError: (error) => {
+             // O estado 'hookError' será atualizado, o useEffect abaixo tratará disso
+             console.error(`[${new Date().toISOString()}] [Frontend] useCompletion: onError capturou:`, error);
+        },
+    });
+
+     // Loga mudanças importantes e atualiza o erro da UI
+     useEffect(() => { console.log(`[${new Date().toISOString()}] [Frontend] useEffect[isLoading]: Mudou para ${isLoading}`); }, [isLoading]);
+     useEffect(() => { if (completion) console.log(`[${new Date().toISOString()}] [Frontend] useEffect[completion]: Atualizado. Tamanho: ${completion.length}.`); }, [completion]);
+     useEffect(() => {
+         if (hookError) {
+             console.error(`[${new Date().toISOString()}] [Frontend] useEffect[hookError]: Erro detectado:`, hookError);
+             setErrorState(`Erro na comunicação com a IA: ${hookError.message}`); // Atualiza o erro visível
+         } else {
+             // Limpa o erro visível se o hook não tiver mais erro (ex: nova tentativa bem-sucedida)
+              // Comentado para evitar limpar o erro de "completion vazio" do onFinish
+             // if (errorState && errorState.startsWith("Erro na comunicação")) {
+             //    setErrorState(null);
+             // }
+         }
+     }, [hookError]);
+
+
+    const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        console.log(`[${new Date().toISOString()}] [Frontend] handleFormSubmit: Submetendo com input: "${input}"`);
+        setErrorState(null); // Limpa erros antigos antes de submeter
+        handleSubmit(e);
+    };
+
+    // Lógica de renderização
+    const showLoading = isLoading;
+    const hasCompletionContent = completion && completion.trim().length > 0;
+    const showResult = hasCompletionContent;
+    const displayError = errorState; // Usamos nosso estado local agora
+    const showInitialMessage = !isLoading && !hasCompletionContent && !displayError;
+
+    console.log(`[${new Date().toISOString()}] [Frontend] Status Renderização: isLoading=${isLoading}, hasCompletionContent=${hasCompletionContent}, displayError=${displayError ? `"${displayError}"` : 'null'}`);
+
+    return (
+        <div style={styles.container}>
+            <h2 style={styles.title}>Soo Tech AI Solution Pathfinder</h2>
+            <p style={styles.description}>
+                Descreva seu desafio ou objetivo de negócio. Nossa IA analisará e gerará um Blueprint Estratégico para uma solução de ponta, ao vivo.
+            </p>
+
+            <form onSubmit={handleFormSubmit} style={{ width: '100%', marginBottom: "25px" }}>
+                <textarea
+                    value={input}
+                    onChange={handleInputChange}
+                    placeholder="Ex: 'Reduzir churn de clientes B2B', 'Otimizar rotas de entrega', 'Prever demanda de estoque'..."
+                    style={styles.textArea}
+                    disabled={isLoading}
+                    rows={4}
+                />
+                <button type="submit" style={isLoading || !input.trim() ? {...styles.button, ...styles.buttonDisabled} : styles.button} disabled={isLoading || !input.trim()}>
+                    {isLoading ? "Analisando e Gerando Blueprint..." : "Gerar Blueprint de Solução"}
+                </button>
+            </form>
+
+             {displayError && (
+                 <div style={styles.error}>
+                     <strong>Erro:</strong> {displayError}
+                     <br/>
+                     <small>(Verifique os logs do Vercel ou tente novamente)</small>
+                 </div>
+             )}
+
+            <div style={styles.blueprintContainer}>
+                {showLoading && !showResult && (
+                    <div style={styles.loading}>
+                         <svg aria-hidden="true" style={styles.spinner} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path></svg>
+                        Analisando seu desafio e construindo a solução...
+                        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+                    </div>
+                )}
+                {showResult && (
+                    <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={components}
+                        children={completion}
+                    />
+                )}
+                 {showInitialMessage && (
+                      <div style={styles.loading}>Seu Blueprint Estratégico aparecerá aqui.</div>
+                 )}
+            </div>
+        </div>
+    )
+}
+
+// --- FIM DO COMPONENTE ---
