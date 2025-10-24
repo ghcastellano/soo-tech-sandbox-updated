@@ -17,15 +17,15 @@ Você é um Arquiteto de Soluções Sênior da Soo Tech. Sua tarefa é gerar um 
     * **Cores Soo Tech:** Use \`#3EFF9B\` (verde) para títulos (h2) e links, e \`#00CFFF\` (ciano) para destaques (como \`<code>\`).
     * **Layout:** Use CSS Flexbox ou Grid para organizar as seções do blueprint de forma limpa e moderna. Deve ser responsivo.
     * **Tipografia:** Use fontes sans-serif (system-ui, Arial).
-3.  **Estrutura do Conteúdo:** A IA deve gerar o HTML para as seguintes seções (baseadas no prompt anterior):
-    * \`<h2>Diagnóstico do Desafio\`
-    * \`<h2>Visão da Solução Soo Tech\`
-    * \`<h2>Pilares Tecnológicos Sugeridos\`
-    * \`<h2>Inteligência de Dados Essencial\`
-    * \`<h2>Impacto Potencial no Negócio\`
-    * \`<h2>Expertise Soo Tech Recomendada\`
-    * \`<h2>Próximos Passos com a Soo Tech\` (Deve incluir um link \`mailto:contato@sootech.com\` formatado)
-4.  **Interatividade:** Adicione JavaScript MÍNIMO (em tags \`<script>\`) apenas para efeitos sutis (ex: hover), se necessário.
+3.  **Estrutura do Conteúdo:** A IA deve gerar o HTML para as seguintes seções (use ## no Markdown do seu pensamento, mas gere H2 no HTML final):
+    * \`Diagnóstico do Desafio\`
+    * \`Visão da Solução Soo Tech\`
+    * \`Pilares Tecnológicos Sugeridos\`
+    * \`Inteligência de Dados Essencial\`
+    * \`Impacto Potencial no Negócio\`
+    * \`Expertise Soo Tech Recomendada\`
+    * \`Próximos Passos com a Soo Tech\` (Deve incluir um link \`mailto:contato@sootech.com\`)
+4.  **Interatividade:** JavaScript MÍNIMO (em tags \`<script>\`) apenas para efeitos sutis, se necessário.
 5.  **SAÍDA ESTRITA:** Responda **APENAS** com o código HTML. Sem explicações ou markdown \`\`\`.
 
 **Exemplo de Resposta (e NADA MAIS):**
@@ -52,7 +52,7 @@ Você é um Arquiteto de Soluções Sênior da Soo Tech. Sua tarefa é gerar um 
     <h2>Visão da Solução Soo Tech</h2>
     <p>Nossa proposta de solução...</p>
     <h2>Próximos Passos com a Soo Tech</h2>
-    <p>Este blueprint inicial demonstra o potencial de uma solução customizada. A Soo Tech possui vasta experiência em desafios semelhantes. Quer transformar este conceito em realidade? <a href="mailto:contato@sootech.com">Fale com nossos especialistas</a>.</p>
+    <p>Este blueprint inicial demonstra o potencial de uma solução customizada. A Soo Tech possui vasta experiência em desafios semelhantes. Quer transformar este conceito em realidade? <a href="mailto:contato@sootech.com?subject=Interesse%20Blueprint">Fale com nossos especialistas</a>.</p>
 </body>
 </html>
 `;
@@ -85,9 +85,6 @@ export async function POST(req: Request) {
       model: openai('gpt-4o-mini'),
       system: systemPrompt,
       prompt: `Analise este desafio de negócio e gere o blueprint HTML: ${prompt}`,
-      onFinish: ({ text }) => {
-        console.log(`[${timestamp}] [API] streamText: onFinish. Tamanho final: ${text.length}`);
-      }
     });
     console.log(`[${timestamp}] [API] Chamada para OpenAI bem-sucedida. Retornando stream.`);
     
@@ -100,4 +97,4 @@ export async function POST(req: Request) {
   }
 }
 
-export {};
+export {}; // Correção para bug de módulo do Vercel/Turbopack
