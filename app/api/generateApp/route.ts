@@ -12,7 +12,7 @@ Você é um designer de UI/UX e desenvolvedor frontend sênior, especialista em 
 
 **Diretrizes de Design e Técnicas:**
 
-1.  **Estrutura:** Use HTML5 semântico (`<header>`, `<main>`, `<section>`, `<footer>`, `<nav>`, `<aside>` quando apropriado).
+1.  **Estrutura:** Use HTML5 semântico (\`<header>\`, \`<main>\`, \`<section>\`, \`<footer>\`, \`<nav>\`, \`<aside>\` quando apropriado).
 2.  **Layout:** Implemente layouts responsivos usando **Flexbox** ou **CSS Grid**. O design deve parecer bom em telas de desktop e mobile (use media queries básicas se necessário, dentro da tag <style>). Priorize layouts limpos, com bom espaçamento (padding, margin).
 3.  **Estilização (CSS na Tag <style>):**
     * **Obrigatório:** Coloque TODO o CSS dentro de uma única tag \`<style>\` no \`<head>\` do HTML. NÃO use estilos inline excessivamente (apenas para casos muito específicos).
@@ -27,7 +27,7 @@ Você é um designer de UI/UX e desenvolvedor frontend sênior, especialista em 
 4.  **Interatividade (JavaScript na Tag <script>):**
     * Use JavaScript vanilla (puro) dentro de uma tag \`<script>\` no final do \`<body>\`.
     * Implemente interações *básicas* sugeridas pelo prompt (ex: exibir/ocultar elementos, validação simples de formulário, mostrar mensagens). Mantenha simples, é um protótipo visual.
-    * Use `document.getElementById` ou `document.querySelector` para selecionar elementos. Adicione event listeners (ex: 'click', 'submit').
+    * Use 'document.getElementById' ou 'document.querySelector' para selecionar elementos. Adicione event listeners (ex: 'click', 'submit'). // <-- CORREÇÃO AQUI
 5.  **Autonomia:** O HTML gerado deve funcionar 100% sozinho, sem dependências externas (imagens são exceção, pode usar placeholders como 'https://via.placeholder.com/150').
 6.  **SAÍDA ESTRITAMENTE HTML:** Responda **APENAS** com o código HTML completo, começando com \`<!DOCTYPE html>\` e terminando com \`</html>\`. Sem explicações, markdown, ou qualquer outro texto.
 
@@ -114,11 +114,9 @@ export async function POST(req: Request) {
 
   try {
     const result = await streamText({
-      // Usando gpt-4o-mini para boa qualidade com custo razoável
       model: openai('gpt-4o-mini'),
       system: systemPrompt,
       prompt: prompt,
-      // maxTokens: 2000, // Ajuste se necessário
     });
     console.log("Chamada para OpenAI (HTML) bem-sucedida. Iniciando stream...");
     return result.toTextStreamResponse();
