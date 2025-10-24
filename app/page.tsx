@@ -61,19 +61,22 @@ export default function LiveSandbox() {
     // Modifique o useCompletion para ficar assim:
 const { input, handleInputChange, handleSubmit } = useCompletion({
     api: "/api/generateApp",
-    onFinish: (prompt, generatedCode) => {
-        // LOG PARA VER O QUE RECEBEMOS
-        console.log("Código recebido da API:", generatedCode); 
+    onFinish: (prompt) => { // O parâmetro 'generatedCode' pode não ser confiável, vamos ignorá-lo
+    // LOG PARA VER O QUE TEMOS NO ESTADO 'completion'
+    console.log("onFinish chamado. Estado 'completion':", completion); 
 
-        if (generatedCode && generatedCode.trim().length > 0) {
-            console.log("Gerando o sandbox...");
-            bootSandbox(generatedCode);
-        } else {
-            console.error("Erro: Código gerado está vazio!");
-            setIsLoading(false); // Para o loading
-            alert("Erro: A IA não retornou um código válido. Tente novamente ou verifique o console.");
-        }
-    },
+    // USAREMOS a variável 'completion' do hook, não o segundo parâmetro da callback
+    const finalCode = completion; 
+
+    if (finalCode && finalCode.trim().length > 0) {
+        console.log("Gerando o sandbox com o código do estado 'completion'...");
+        bootSandbox(finalCode); // Passa o código do estado para o StackBlitz
+    } else {
+        console.error("Erro: Código gerado (do estado 'completion') está vazio!");
+        setIsLoading(false); // Para o loading
+        alert("Erro: A IA não retornou um código válido (estado 'completion' vazio). Verifique o console e os logs do Vercel.");
+    }
+},
     onError: (error) => {
         // LOG PARA VER ERROS DA API
         console.error("Erro ao chamar a API:", error);
