@@ -15,14 +15,14 @@
     "ai": "latest",
     "@ai-sdk/openai": "latest",
     "@ai-sdk/react": "latest",
-    "@stackblitz/sdk": "latest", 
+    "@stackblitz/sdk": "latest",
     "react-markdown": "latest",
     "remark-gfm": "latest"
   },
- "devDependencies": {
-  "@types/node": "^20",
-  "@types/react": "18.2.0",
-  "@types/react-dom": "18.2.0",
-  "typescript": "^5"
-}
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "18.2.0",
+    "@types/react-dom": "18.2.0",
+    "typescript": "^5"
+  }
 }
