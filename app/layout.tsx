@@ -2,7 +2,6 @@
 
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-// A linha 'import "./globals.css";' foi REMOVIDA daqui
 
 const inter = Inter({ subsets: ["latin"] });
 
