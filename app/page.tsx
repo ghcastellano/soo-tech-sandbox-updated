@@ -1,37 +1,23 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import sdk from "@stackblitz/sdk";
-
-// --- ARQUIVOS DE SISTEMA (Template 'typescript', sem StrictMode) ---
-const indexHtml = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>AI Prototype</title><link rel="stylesheet" href="styles.css"></head><body><div id="root"></div><script type="module" src="index.ts"></script></body></html>`;
-const indexTsx = `import React from 'react';\nimport ReactDOM from 'react-dom';\nimport App from './App';\nimport './styles.css';\n\nconst rootElement = document.getElementById('root');\n\nReactDOM.render(<App />, rootElement);`; // Sem StrictMode
-const stylesCss = `body { font-family: sans-serif; background-color: #1e1e1e; color: white; margin: 0; padding: 0; } #root { padding: 1rem; }`;
-// --- FIM DOS ARQUIVOS DE SISTEMA ---
+import React, { useState, useEffect } from "react";
+// Não precisamos mais do StackBlitz SDK ou useCompletion
 
 export default function LiveSandbox() {
     const [input, setInput] = useState("");
-    const latestCodeRef = useRef<string | null>(null);
+    const [generatedHtml, setGeneratedHtml] = useState<string | null>(null); // Estado para guardar o HTML
     const [isLoadingAPI, setIsLoadingAPI] = useState(false);
-    const [isBootingSandbox, setIsBootingSandbox] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const sandboxRef = useRef<HTMLDivElement>(null);
-    const hasBootedRef = useRef(false);
-    const [submissionTrigger, setSubmissionTrigger] = useState(0);
+    const [submissionTrigger, setSubmissionTrigger] = useState(0); // Para saber quando o fetch terminou
 
-    // Função Fetch Manual (sem mudanças)
-    const fetchGeneratedCode = async (prompt: string) => {
+    // Função Fetch Manual (adaptada para HTML)
+    const fetchGeneratedHtml = async (prompt: string) => {
         setIsLoadingAPI(true);
         setError(null);
-        latestCodeRef.current = null;
-        hasBootedRef.current = false;
-        
-        // REMOVIDO: Limpeza manual do innerHTML
-        // if (sandboxRef.current) sandboxRef.current.innerHTML = ""; 
-
-        console.log("Iniciando fetch para /api/generateApp com prompt:", prompt);
+        setGeneratedHtml(null); // Limpa o HTML anterior
+        console.log("Iniciando fetch para /api/generateApp (HTML) com prompt:", prompt);
         try {
-            const response = await fetch('/api/generateApp', {
+            const response = await fetch('/api/generateApp', { // A API é a mesma
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }),
             });
             console.log("Resposta da API recebida, status:", response.status);
@@ -39,133 +25,94 @@ export default function LiveSandbox() {
                 const errorText = await response.text(); throw new Error(`Erro da API (${response.status}): ${errorText || response.statusText}`);
             }
             if (!response.body) { throw new Error("Resposta da API vazia."); }
+
+            // Ler a stream de texto completa
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
-            let codeAccumulator = "";
+            let htmlAccumulator = "";
             console.log("Lendo stream...");
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) { console.log("Stream finalizada."); break; }
-                codeAccumulator += decoder.decode(value, { stream: true });
+                htmlAccumulator += decoder.decode(value, { stream: true });
             }
-            console.log("Código final acumulado:", codeAccumulator);
-            latestCodeRef.current = codeAccumulator;
+            console.log("HTML final acumulado:", htmlAccumulator);
+
+            // Verifica se a IA retornou algo minimamente parecido com HTML
+            if (htmlAccumulator && htmlAccumulator.trim().toLowerCase().includes('<html>')) {
+                setGeneratedHtml(htmlAccumulator); // Define o estado com o HTML completo
+            } else {
+                 console.error("Erro: A resposta da IA não parece ser HTML válido:", htmlAccumulator);
+                 setError("A IA respondeu, mas o formato não parece ser HTML válido.");
+                 setGeneratedHtml(null); // Garante que fique nulo
+            }
+
         } catch (err: any) {
-            console.error("Erro durante o fetch:", err);
+            console.error("Erro durante o fetch ou leitura da stream:", err);
             setError(err.message || "Erro desconhecido.");
         } finally {
             setIsLoadingAPI(false);
             console.log("Fetch finalizado.");
-            setSubmissionTrigger(prev => prev + 1);
+            setSubmissionTrigger(prev => prev + 1); // Dispara o useEffect
         }
     };
 
     const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const currentInput = input.trim();
-        if (!currentInput || isLoadingAPI || isBootingSandbox) return;
-        fetchGeneratedCode(currentInput);
+        if (!currentInput || isLoadingAPI) return;
+        fetchGeneratedHtml(currentInput);
     };
 
-    // useEffect para iniciar o Sandbox (sem mudanças)
-    useEffect(() => {
-        if (submissionTrigger > 0 && !isLoadingAPI && !hasBootedRef.current) {
-            hasBootedRef.current = true;
-            const currentCode = latestCodeRef.current;
-            console.log("useEffect pós-fetch ativado. Código na Ref:", currentCode);
-            if (currentCode && currentCode.trim().length > 0) {
-                 console.log("Código válido detectado na Ref. Iniciando boot do sandbox...");
-                 setIsBootingSandbox(true);
-                 bootSandbox(currentCode);
-             } else if (!error) {
-                 console.error("Erro: Código final vazio na Ref após fetch bem-sucedido.");
-                 setError("A IA respondeu, mas o código final está vazio.");
-             }
-        }
-    }, [submissionTrigger, isLoadingAPI, error]);
-
-    // Função bootSandbox (voltando para template 'typescript')
-    const bootSandbox = (appCode: string) => {
-        if (!sandboxRef.current) {
-            console.error("Referência do Sandbox não encontrada no bootSandbox");
-            setIsLoadingAPI(false);
-            setIsBootingSandbox(false);
-            setError("Erro interno: Container do sandbox não encontrado.");
-            return;
-        };
-        // O SDK deve lidar com a limpeza do container agora
-        console.log("Chamando sdk.embedProject com template typescript...");
-        sdk.embedProject(
-            sandboxRef.current,
-            {
-                title: "Protótipo Gerado pela Soo Tech",
-                template: "typescript", // <-- VOLTANDO PARA TYPESCRIPT
-                files: {
-                    "index.html": indexHtml,
-                    "index.ts": indexTsx,   // Arquivo de entrada correto
-                    "styles.css": stylesCss,
-                    "App.tsx": appCode,    // Código da IA
-                },
-            },
-            { // Opções de Embed
-                openFile: "App.tsx",
-                view: "preview",
-                height: 500,
-                theme: "dark",
-                hideExplorer: true,
-                hideNavigation: true,
-                hideDevTools: true,
-                clickToLoad: false,
-            }
-        ).then(() => {
-            console.log("Sandbox iniciado com sucesso.");
-            setIsBootingSandbox(false);
-        }).catch((err) => {
-             console.error("Erro ao iniciar o StackBlitz:", err);
-             setIsLoadingAPI(false);
-             setIsBootingSandbox(false);
-             setError(`Erro ao iniciar o ambiente: ${err.message}`);
-        });
-    };
-
-    const isOverallLoading = isLoadingAPI || isBootingSandbox;
-
-    // Interface (JSX - sem mudanças)
+    // Interface (JSX - Com iframe e srcdoc)
     return (
         <div style={{ width: "100%", fontFamily: "sans-serif", color: "white", background: "#0A0A0A", padding: "20px" }}>
             <form onSubmit={onFormSubmit} style={{ marginBottom: "16px" }}>
                 <textarea
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="Descreva a interface que você quer prototipar..."
+                    placeholder="Descreva a interface HTML que você quer prototipar..." // Atualizado placeholder
                     style={textAreaStyle}
-                    disabled={isOverallLoading}
+                    disabled={isLoadingAPI}
                 />
-                <button type="submit" style={buttonStyle} disabled={isOverallLoading || !input.trim()}>
-                    {isLoadingAPI ? "Gerando Código..." : (isBootingSandbox ? "Compilando Protótipo..." : "Gerar Protótipo ao Vivo")}
+                <button type="submit" style={buttonStyle} disabled={isLoadingAPI || !input.trim()}>
+                    {isLoadingAPI ? "Gerando Protótipo HTML..." : "Gerar Protótipo HTML"}
                 </button>
             </form>
 
              {error && ( <div style={errorStyle}><strong>Erro:</strong> {error}</div> )}
 
-            <div ref={sandboxRef} id="sandbox-container" style={sandboxContainerStyle}>
-                {isOverallLoading && (
+            {/* Container para o Iframe */}
+            <div style={sandboxContainerStyle}>
+                {isLoadingAPI && (
                     <div style={loadingStyle}>
-                        {isLoadingAPI ? "Aguarde... Gerando código com IA..." : "Iniciando sandbox e compilando..."}
-                        <br/>(Isso pode levar mais tempo)
+                        Aguarde... Gerando código HTML com IA...
                     </div>
                 )}
-                {!isOverallLoading && (!sandboxRef.current || sandboxRef.current.innerHTML === "") && !error && (
+                {!isLoadingAPI && generatedHtml && !error && (
+                    <iframe
+                        srcDoc={generatedHtml} // INJETA O HTML AQUI
+                        style={iframeStyle}
+                        sandbox="allow-scripts allow-same-origin" // Permite JS, mas restringe algumas coisas
+                        title="Protótipo Gerado por IA"
+                    />
+                )}
+                {!isLoadingAPI && !generatedHtml && !error && (
                      <div style={loadingStyle}>Aguardando seu prompt...</div>
                 )}
+                 {/* Mensagem se a IA retornou vazio, mesmo sem erro de fetch */}
+                 {!isLoadingAPI && generatedHtml === null && submissionTrigger > 0 && !error &&(
+                      <div style={loadingStyle}>A IA respondeu, mas o código HTML parece vazio ou inválido.</div>
+                 )}
             </div>
         </div>
     )
 }
 
-// Estilos (mantidos)
+// Estilos
 const textAreaStyle: React.CSSProperties = { width: "100%", minHeight: "100px", padding: "16px", background: "#151515", color: "#FFFFFF", border: "1px solid #333", borderRadius: "8px", fontFamily: "monospace", fontSize: "14px", boxSizing: "border-box" };
 const buttonStyle: React.CSSProperties = { width: "100%", padding: "16px", background: "#3EFF9B", color: "#0A0A0A", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "16px", fontWeight: "bold", marginTop: "8px" };
-const sandboxContainerStyle: React.CSSProperties = { width: "100%", height: "500px", background: "#0A0A0A", border: "1px solid #333", borderRadius: "8px", overflow: "hidden", position: 'relative' };
+const sandboxContainerStyle: React.CSSProperties = { width: "100%", height: "500px", background: "#0A0A0A", border: "1px solid #333", borderRadius: "8px", overflow: "hidden", position: 'relative', marginTop: '20px' };
 const loadingStyle: React.CSSProperties = { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", color: "#888", fontSize: "14px", background: '#0A0A0A' };
 const errorStyle: React.CSSProperties = { color: 'red', marginBottom: '10px', whiteSpace: 'pre-wrap', border: '1px solid red', padding: '10px', borderRadius: '4px', background: '#2a0000' };
+const iframeStyle: React.CSSProperties = { width: '100%', height: '100%', border: 'none' };
