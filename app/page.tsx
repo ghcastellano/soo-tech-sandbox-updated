@@ -1,51 +1,45 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-// Nenhuma dependência extra de AI SDK ou Markdown é necessária aqui.
+import React, { useState, useRef, useEffect } from "react";
+// Não precisamos mais do StackBlitz SDK ou useCompletion
 
-export default function SolutionBlueprintGenerator() {
+// --- ARQUIVOS DE SISTEMA (Boilerplate básico, não usado diretamente) ---
+const indexHtml = `<!DOCTYPE html><html><head><title>Protótipo</title></head><body><div id="root"></div><script type="module" src="index.ts"></script></body></html>`;
+const indexTsx = `import React from 'react';\nimport ReactDOM from 'react-dom';\nimport App from './App';\nconst root = document.getElementById('root');\nReactDOM.render(<App />, root);`;
+const stylesCss = `body { margin: 0; font-family: sans-serif; }`;
+// --- FIM DOS ARQUIVOS DE SISTEMA ---
+
+export default function LiveSandbox() {
     const [input, setInput] = useState("");
     const [generatedHtml, setGeneratedHtml] = useState<string | null>(null);
     const [isLoadingAPI, setIsLoadingAPI] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [submissionTimestamp, setSubmissionTimestamp] = useState<number | null>(null); // Para controlar estado inicial
 
-    // Função Fetch Manual
+    // Função Fetch Manual (sem mudanças na lógica de fetch)
     const fetchGeneratedHtml = async (prompt: string) => {
         setIsLoadingAPI(true);
         setError(null);
-        setGeneratedHtml(null);
+        setGeneratedHtml(null); // Limpa o HTML anterior
         setSubmissionTimestamp(Date.now()); // Marca o início da submissão
         console.log(`[${new Date().toISOString()}] [Frontend] Iniciando fetch para /api/generateApp (HTML) com prompt:`, prompt);
-
         try {
-            const response = await fetch('/api/generateApp', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt }),
+            const response = await fetch('/api/generateApp', { // A API é a mesma
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }),
             });
             console.log(`[${new Date().toISOString()}] [Frontend] Resposta da API recebida, status: ${response.status}`);
-
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Erro da API (${response.status}): ${errorText || response.statusText}`);
+                const errorText = await response.text(); throw new Error(`Erro da API (${response.status}): ${errorText || response.statusText}`);
             }
-
-            if (!response.body) {
-                throw new Error("Resposta da API não contém corpo (body).");
-            }
+            if (!response.body) { throw new Error("Resposta da API vazia."); }
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let htmlAccumulator = "";
             console.log(`[${new Date().toISOString()}] [Frontend] Lendo stream...`);
-
             while (true) {
                 const { done, value } = await reader.read();
-                if (done) {
-                    console.log(`[${new Date().toISOString()}] [Frontend] Stream finalizada.`);
-                    break;
-                }
+                if (done) { console.log(`[${new Date().toISOString()}] [Frontend] Stream finalizada.`); break; }
                 htmlAccumulator += decoder.decode(value, { stream: true });
                 // Atualiza o estado a cada chunk para efeito de streaming
                 setGeneratedHtml(htmlAccumulator); 
@@ -56,8 +50,10 @@ export default function SolutionBlueprintGenerator() {
             // Limpeza final de Markdown (se a IA ainda errar)
             let cleanedHtml = htmlAccumulator.trim();
             if (cleanedHtml.startsWith('```html') && cleanedHtml.endsWith('```')) {
+                console.log("Detectado Markdown 'html', limpando...");
                 cleanedHtml = cleanedHtml.substring(7, cleanedHtml.length - 3).trim();
             } else if (cleanedHtml.startsWith('```') && cleanedHtml.endsWith('```')) {
+                console.log("Detectado Markdown genérico, limpando...");
                 cleanedHtml = cleanedHtml.substring(3, cleanedHtml.length - 3).trim();
             }
 
@@ -77,6 +73,7 @@ export default function SolutionBlueprintGenerator() {
         } finally {
             setIsLoadingAPI(false);
             console.log(`[${new Date().toISOString()}] [Frontend] Fetch finalizado.`);
+            setSubmissionTimestamp(prev => (prev || 0) + 1); // Dispara o useEffect para renderizar (ou mostrar erro)
         }
     };
 
@@ -91,14 +88,14 @@ export default function SolutionBlueprintGenerator() {
     const showLoading = isLoadingAPI;
     const hasHtmlContent = generatedHtml && generatedHtml.trim().length > 0;
     const showResult = hasHtmlContent;
-    const showInitialMessage = !isLoadingAPI && !hasHtmlContent && !error && !submissionTimestamp;
-    const showEmptyStatePostSubmit = !isLoadingAPI && !hasHtmlContent && !error && submissionTimestamp;
-
+    const displayError = error;
+    const showInitialMessage = !isLoadingAPI && !hasHtmlContent && !displayError && !submissionTimestamp;
+    
     return (
         <div style={styles.container}>
             <h2 style={styles.title}>Diagnóstico Inteligente Soo Tech</h2>
             <p style={styles.description}>
-                Descreva seu desafio ou objetivo de negócio. Nossa IA analisará e gerará um Blueprint Estratégico de como a Soo Tech pode ajudar a transformar essa questão em resultados tangíveis, ao vivo.
+                Descreva seu desafio ou objetivo de negócio. Nossa IA analisará e gerará um **Blueprint Estratégico** de como a Soo Tech pode ajudar a transformar essa questão em resultados tangíveis, ao vivo.
             </p>
 
             <form onSubmit={onFormSubmit} style={{ width: '100%', maxWidth: '800px', margin: '0 auto 40px auto' }}>
@@ -123,7 +120,9 @@ export default function SolutionBlueprintGenerator() {
                     <iframe
                         srcDoc={generatedHtml || ""} // Injeta o HTML
                         style={styles.iframe}
-                        sandbox="allow-scripts allow-same-origin allow-modals" // Permite JS básico e modais (alert)
+                        // --- CORREÇÃO AQUI ---
+                        // Removido 'allow-same-origin'. Adicionado 'allow-forms'.
+                        sandbox="allow-scripts allow-forms allow-modals" 
                         title="Protótipo Gerado por IA"
                     />
                 ) : (
@@ -136,7 +135,7 @@ export default function SolutionBlueprintGenerator() {
                                 <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
                             </>
                         ) : (
-                            showInitialMessage ? "Seu Blueprint Estratégico personalizado aparecerá aqui." : "Falha ao gerar blueprint. Verifique os logs e tente novamente."
+                            submissionTimestamp ? "Falha ao gerar blueprint. Verifique os logs e tente novamente." : "Seu Blueprint Estratégico personalizado aparecerá aqui."
                         )}
                     </div>
                 )}
@@ -170,17 +169,17 @@ const styles = {
         border: "1px solid #222",
         borderRadius: "12px",
         marginTop: '40px',
-        minHeight: '500px', // Altura mínima
+        minHeight: '500px',
         boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
-        overflow: 'hidden', // Para conter o iframe e o loading
+        overflow: 'hidden',
         position: 'relative'
     } as React.CSSProperties,
     iframe: {
         width: '100%',
-        height: '100%',
-        minHeight: '500px', // Garante que o iframe tenha altura
+        height: '100%', // O 'minHeight' do container vai definir a altura
+        minHeight: '500px', 
         border: 'none',
-        display: 'block' // Remove espaço extra
+        display: 'block'
     } as React.CSSProperties,
     loading: { 
         position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
