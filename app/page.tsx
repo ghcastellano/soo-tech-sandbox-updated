@@ -1,109 +1,82 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useCompletion, UseCompletionHelpers } from "@ai-sdk/react"; // Importar UseCompletionHelpers
+import React, { useState, useEffect, useRef } from "react"; // Import useRef
+import { useCompletion } from "@ai-sdk/react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-// --- Componentes de Estilização para Markdown (mantidos) ---
-const components = { /* ... cole os components da resposta anterior aqui ... */ };
-const styles = { /* ... cole os styles da resposta anterior aqui ... */ };
-// Cole aqui as definições completas de 'components' e 'styles' da resposta anterior
+// --- COMPONENTES DE ESTILIZAÇÃO PARA MARKDOWN (Definidos dentro do objeto styles abaixo) ---
+const components = {
+    h2: ({node, ...props}: any) => <h2 style={styles.h2} {...props} />,
+    ul: ({node, ...props}: any) => <ul style={styles.ul} {...props} />,
+    li: ({node, ...props}: any) => <li style={styles.li} {...props} />,
+    p: ({node, ...props}: any) => <p style={styles.p} {...props} />,
+    code: ({node, inline, className, children, ...props}: any) => {
+      const match = /language-(\w+)/.exec(className || '');
+      return !inline ? (
+        <pre style={styles.codeBlock}><code className={className} {...props}>{children}</code></pre>
+      ) : (
+        <code style={styles.inlineCode} className={className} {...props}>{children}</code>
+      );
+    },
+    strong: ({node, ...props}: any) => <strong style={styles.strong} {...props} />,
+    a: ({node, ...props}: any) => <a style={styles.link} target="_blank" rel="noopener noreferrer" {...props} />,
+};
+// --- FIM DOS COMPONENTES DE ESTILIZAÇÃO ---
 
-// Certifique-se de que os estilos estejam definidos corretamente
-const markdownStyles: React.CSSProperties = { /* ... */ };
-const h2Style: React.CSSProperties = { /* ... */ };
-// ... (todos os outros estilos de markdown)
 
-// Atribua os estilos aos componentes
-Object.assign(components, {
-    h2: ({node, ...props}: any) => <h2 style={h2Style} {...props} />,
-    // ... (todos os outros mapeamentos)
-});
-
-
-// --- Componente Principal com Logs Detalhados ---
 export default function SolutionBlueprintGenerator() {
     console.log(`[${new Date().toISOString()}] [Frontend] Renderizando SolutionBlueprintGenerator...`);
 
-    const [errorState, setErrorState] = useState<string | null>(null); // Estado local para erros
+    const [errorState, setErrorState] = useState<string | null>(null);
 
-    const completionHook = useCompletion({
+    const {
+        input,
+        handleInputChange,
+        handleSubmit,
+        completion,
+        isLoading,
+        error: hookError,
+        stop,
+    } = useCompletion({
         api: "/api/generateApp",
-        // Definindo callbacks do hook para logging
         onResponse: (response) => {
             console.log(`[${new Date().toISOString()}] [Frontend] useCompletion: onResponse - Status: ${response.status}`);
             if (!response.ok) {
-                console.error(`[${new Date().toISOString()}] [Frontend] useCompletion: onResponse - Erro de resposta: ${response.statusText}`);
+                console.error(`[${new Date().toISOString()}] [Frontend] useCompletion: onResponse - Erro: ${response.statusText}`);
                 setErrorState(`Erro da API: ${response.status} ${response.statusText}`);
             } else {
-                 setErrorState(null); // Limpa erro se a resposta for OK
+                 setErrorState(null);
             }
         },
-        onFinish: ({ completion }) => {
-            // Este onFinish agora recebe o 'completion' final como argumento
-            console.log(`[${new Date().toISOString()}] [Frontend] useCompletion: onFinish chamado. Completion final tem ${completion?.length ?? 0} caracteres.`);
-            if (!completion || completion.trim().length === 0) {
+        onFinish: ({ completion: finalCompletion } = {}) => { // Use destructured param if available
+            console.log(`[${new Date().toISOString()}] [Frontend] useCompletion: onFinish chamado. Completion final tem ${finalCompletion?.length ?? 0} caracteres.`);
+            if (!finalCompletion || finalCompletion.trim().length === 0) {
                  console.warn(`[${new Date().toISOString()}] [Frontend] useCompletion: onFinish - Completion final está VAZIO.`);
-                 // Poderíamos setar um erro aqui, mas vamos deixar o useEffect lidar com isso
             }
         },
         onError: (error) => {
              console.error(`[${new Date().toISOString()}] [Frontend] useCompletion: onError capturou:`, error);
              setErrorState(`Erro na comunicação: ${error.message}`);
         },
-        // experimental_streamData: true // Se ativamos no backend
     });
 
-    const {
-        input,
-        handleInputChange,
-        handleSubmit,
-        completion, // O Markdown sendo recebido via stream
-        isLoading,
-        error: hookError, // Renomeado para clareza
-        // data // Se experimental_streamData estiver ativo
-    } = completionHook;
-
-     // Logar mudanças nos estados principais do hook
-     useEffect(() => {
-        console.log(`[${new Date().toISOString()}] [Frontend] useEffect[isLoading]: Mudou para ${isLoading}`);
-     }, [isLoading]);
-
-     useEffect(() => {
-         // Logar apenas quando completion realmente muda
-         console.log(`[${new Date().toISOString()}] [Frontend] useEffect[completion]: Atualizado. Tamanho: ${completion?.length ?? 0}. Preview: "${completion?.substring(0, 50)}..."`);
-     }, [completion]);
-
-     useEffect(() => {
-         if (hookError) {
-             console.error(`[${new Date().toISOString()}] [Frontend] useEffect[hookError]: Erro detectado:`, hookError);
-             // Atualiza nosso estado local se o hook reportar erro
-             setErrorState(hookError.message);
-         } else {
-             // Limpa o erro local se o hook não tiver erro (ex: nova submissão bem-sucedida)
-              // setErrorState(null); // Cuidado: pode limpar erros que queremos mostrar
-         }
-     }, [hookError]);
-
-    // useEffect(() => {
-    //     if (data) {
-    //          console.log(`[${new Date().toISOString()}] [Frontend] useEffect[data]: Dados recebidos via streamData:`, data);
-    //     }
-    // }, [data]);
-
+     // Loga mudanças importantes
+     useEffect(() => { console.log(`[${new Date().toISOString()}] [Frontend] useEffect[isLoading]: Mudou para ${isLoading}`); }, [isLoading]);
+     useEffect(() => { console.log(`[${new Date().toISOString()}] [Frontend] useEffect[completion]: Atualizado. Tamanho: ${completion?.length ?? 0}.`); }, [completion]);
+     useEffect(() => { if (hookError) { console.error(`[${new Date().toISOString()}] [Frontend] useEffect[hookError]: Erro:`, hookError); setErrorState(hookError.message); } }, [hookError]);
 
     const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         console.log(`[${new Date().toISOString()}] [Frontend] handleFormSubmit: Submetendo com input: "${input}"`);
-        setErrorState(null); // Limpa erros antigos antes de submeter
-        handleSubmit(e); // Chama a função do hook
+        setErrorState(null);
+        handleSubmit(e);
     };
 
-    // Lógica de renderização com logs
+    // Lógica de renderização
     const showLoading = isLoading;
     const hasCompletionContent = completion && completion.trim().length > 0;
     const showResult = hasCompletionContent;
-    const displayError = errorState || (hookError?.message); // Mostra nosso erro local ou o do hook
+    const displayError = errorState || (hookError?.message);
     const showInitialMessage = !isLoading && !hasCompletionContent && !displayError;
 
     console.log(`[${new Date().toISOString()}] [Frontend] Status Renderização: isLoading=${isLoading}, hasCompletionContent=${hasCompletionContent}, displayError=${displayError ? `"${displayError}"` : 'null'}`);
@@ -129,31 +102,29 @@ export default function SolutionBlueprintGenerator() {
                 </button>
             </form>
 
-             {/* Mostra erro */}
              {displayError && (
                  <div style={styles.error}>
                      <strong>Erro ao gerar blueprint:</strong> {displayError}
+                     <br/>
+                     <small>(Verifique os logs do Vercel ou tente novamente)</small>
                  </div>
              )}
 
-            {/* Container para o Blueprint Renderizado */}
             <div style={styles.blueprintContainer}>
-                {showLoading && !hasCompletionContent && ( // Mostra loading só se ainda não tiver NADA pra mostrar
+                {showLoading && !showResult && (
                     <div style={styles.loading}>
                          <svg aria-hidden="true" style={styles.spinner} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path></svg>
                         Analisando seu desafio e construindo a solução...
                         <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
                     </div>
                 )}
-                {/* Renderiza o Markdown em tempo real assim que ele começar a chegar */}
-                {hasCompletionContent && (
+                {showResult && (
                     <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         components={components}
                         children={completion}
                     />
                 )}
-                 {/* Mensagem Inicial */}
                  {showInitialMessage && (
                       <div style={styles.loading}>Seu Blueprint Estratégico aparecerá aqui.</div>
                  )}
@@ -162,11 +133,8 @@ export default function SolutionBlueprintGenerator() {
     )
 }
 
-// --- ESTILOS MODERNIZADOS (Manter os mesmos da resposta anterior) ---
-const styles = { /* ... cole os styles completos da resposta anterior aqui ... */ };
-// Cole aqui as definições completas de 'styles' (container, title, etc.) da resposta anterior
-// Garanta que os componentes de estilização referenciem 'styles.' corretamente.
-Object.assign(styles, {
+// --- ESTILOS MODERNIZADOS (Definição ÚNICA e Correta) ---
+const styles = {
     container: { width: "100%", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif", color: "#E0E0E0", background: "#050505", padding: "40px 50px", boxSizing: 'border-box', minHeight: '100vh' } as React.CSSProperties,
     title: { color: "#FFFFFF", fontSize: "clamp(1.5rem, 4vw, 2.2rem)", fontWeight: 700, marginBottom: "15px", textAlign: 'center' } as React.CSSProperties,
     description: { color: "#A0A0A0", fontSize: "clamp(0.9rem, 2.5vw, 1.1rem)", marginBottom: "40px", textAlign: 'center', maxWidth: '800px', marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.6 } as React.CSSProperties,
@@ -202,22 +170,5 @@ Object.assign(styles, {
     codeBlock: { backgroundColor: '#1C1C1C', padding: '15px', borderRadius: '6px', fontFamily: '"Fira Code", monospace', fontSize: '0.9em', overflowX: 'auto', marginBottom: '15px', border: '1px solid #333', whiteSpace: 'pre-wrap' } as React.CSSProperties,
     strong: { color: '#FFFFFF', fontWeight: 600 } as React.CSSProperties,
     link: { color: '#00CFFF', textDecoration: 'none', borderBottom: '1px dotted #00CFFF', transition: 'color 0.2s' } as React.CSSProperties,
-});
-
-// Certifique-se de que os estilos dos componentes Markdown estão definidos
-Object.assign(components, {
-    h2: ({node, ...props}: any) => <h2 style={styles.h2} {...props} />,
-    ul: ({node, ...props}: any) => <ul style={styles.ul} {...props} />,
-    li: ({node, ...props}: any) => <li style={styles.li} {...props} />,
-    p: ({node, ...props}: any) => <p style={styles.p} {...props} />,
-    code: ({node, inline, className, children, ...props}: any) => {
-      const match = /language-(\w+)/.exec(className || '');
-      return !inline ? (
-        <pre style={styles.codeBlock}><code className={className} {...props}>{children}</code></pre>
-      ) : (
-        <code style={styles.inlineCode} className={className} {...props}>{children}</code>
-      );
-    },
-    strong: ({node, ...props}: any) => <strong style={styles.strong} {...props} />,
-    a: ({node, ...props}: any) => <a style={styles.link} target="_blank" rel="noopener noreferrer" {...props} />,
-});
+};
+// --- FIM DOS ESTILOS ---
