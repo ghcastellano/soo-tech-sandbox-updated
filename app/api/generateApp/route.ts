@@ -8,7 +8,7 @@ export const runtime = 'edge';
 // O "MASTER PROMPT" (Simplificado)
 const systemPrompt = `
 Gere APENAS o código-fonte React TypeScript para um componente chamado 'App.tsx' 
-baseado na descrição do usuário. Nenhuma outra explicação ou text o .
+baseado na descrição do usuário. Nenhuma outra explicação ou texto.
 `;
 
 export async function POST(req: Request) {
@@ -28,8 +28,8 @@ export async function POST(req: Request) {
 
   try {
     const result = await streamText({
-      // MUDANÇA: Usando o modelo gemini-pro mais antigo
-      model: google('models/gemini-pro'), 
+      // MUDANÇA: Usando o nome do modelo sem o prefixo 'models/'
+      model: google('gemini-pro'), 
       system: systemPrompt,
       prompt: prompt,
     });
