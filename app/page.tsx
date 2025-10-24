@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import sdk from "@stackblitz/sdk";
 
-// --- ARQUIVOS DE SISTEMA (Simplificados - Sem mudanças aqui) ---
+// --- ARQUIVOS DE SISTEMA (Simplificados - Sem mudanças) ---
 const indexHtml = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>AI Prototype</title><link rel="stylesheet" href="styles.css"></head><body><div id="root"></div><script type="module" src="index.ts"></script></body></html>`;
 const indexTsx = `import React from 'react';\nimport ReactDOM from 'react-dom';\nimport App from './App';\nimport './styles.css';\n\nconst rootElement = document.getElementById('root');\n\nReactDOM.render(\n  <React.StrictMode>\n    <App />\n  </React.StrictMode>,\n  rootElement\n);`;
 const stylesCss = `body { font-family: sans-serif; background-color: #1e1e1e; color: white; margin: 0; padding: 0; } #root { padding: 1rem; }`;
@@ -11,25 +11,21 @@ const stylesCss = `body { font-family: sans-serif; background-color: #1e1e1e; co
 
 export default function LiveSandbox() {
     const [input, setInput] = useState("");
-    // Não vamos mais usar um estado para o código gerado, usaremos uma ref
-    // const [generatedCode, setGeneratedCode] = useState<string | null>(null); 
-    const latestCodeRef = useRef<string | null>(null); // Ref para guardar o código imediatamente
+    const latestCodeRef = useRef<string | null>(null);
     const [isLoadingAPI, setIsLoadingAPI] = useState(false);
     const [isBootingSandbox, setIsBootingSandbox] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const sandboxRef = useRef<HTMLDivElement>(null);
     const hasBootedRef = useRef(false);
-    const [submissionTrigger, setSubmissionTrigger] = useState(0); // Para re-acionar o useEffect
+    const [submissionTrigger, setSubmissionTrigger] = useState(0);
 
-    // Função para chamar nossa API manualmente
+    // Função Fetch Manual
     const fetchGeneratedCode = async (prompt: string) => {
         setIsLoadingAPI(true);
         setError(null);
-        latestCodeRef.current = null; // Limpa a ref
+        latestCodeRef.current = null;
         hasBootedRef.current = false;
-        if (sandboxRef.current) {
-            sandboxRef.current.innerHTML = "";
-        }
+        if (sandboxRef.current) sandboxRef.current.innerHTML = "";
         console.log("Iniciando fetch para /api/generateApp com prompt:", prompt);
         try {
             const response = await fetch('/api/generateApp', {
@@ -50,17 +46,14 @@ export default function LiveSandbox() {
                 codeAccumulator += decoder.decode(value, { stream: true });
             }
             console.log("Código final acumulado:", codeAccumulator);
-            // ATUALIZA A REF DIRETAMENTE E SINCRONAMENTE
-            latestCodeRef.current = codeAccumulator; 
-
+            latestCodeRef.current = codeAccumulator;
         } catch (err: any) {
             console.error("Erro durante o fetch:", err);
             setError(err.message || "Erro desconhecido.");
         } finally {
-            setIsLoadingAPI(false); // Finaliza o loading da API
+            setIsLoadingAPI(false);
             console.log("Fetch finalizado.");
-            // Incrementa o trigger para re-rodar o useEffect
-            setSubmissionTrigger(prev => prev + 1); 
+            setSubmissionTrigger(prev => prev + 1);
         }
     };
 
@@ -72,41 +65,36 @@ export default function LiveSandbox() {
     };
 
     // useEffect para iniciar o Sandbox
-    // AGORA DEPENDE DO 'submissionTrigger' PARA RODAR APÓS O FETCH
     useEffect(() => {
-        // Roda apenas se:
-        // 1. O trigger foi atualizado (significa que o fetch acabou)
-        // 2. Não estamos mais carregando a API
-        // 3. Ainda não bootamos para esta submissão
         if (submissionTrigger > 0 && !isLoadingAPI && !hasBootedRef.current) {
-            hasBootedRef.current = true; // Marca como iniciado/tratado
-
-            // Lê o código diretamente da Ref (valor mais atualizado)
-            const currentCode = latestCodeRef.current; 
+            hasBootedRef.current = true;
+            const currentCode = latestCodeRef.current;
             console.log("useEffect pós-fetch ativado. Código na Ref:", currentCode);
-
             if (currentCode && currentCode.trim().length > 0) {
                  console.log("Código válido detectado na Ref. Iniciando boot do sandbox...");
                  setIsBootingSandbox(true);
                  bootSandbox(currentCode);
-             } else if (!error) { // Se não houve erro de fetch mas o código é vazio
+             } else if (!error) {
                  console.error("Erro: Código final vazio na Ref após fetch bem-sucedido.");
                  setError("A IA respondeu, mas o código final está vazio.");
-                 // Não precisa resetar isLoadingAPI aqui, pois já está false
              }
         }
-    }, [submissionTrigger, isLoadingAPI, error]); // Removido 'generatedCode'
+    }, [submissionTrigger, isLoadingAPI, error]);
 
-
-    // Função bootSandbox (sem mudanças)
+    // Função bootSandbox (COM A LINHA EXTRA REMOVIDA)
     const bootSandbox = (appCode: string) => {
-        if (!sandboxRef.current) return;
-        sdk.embedProject(/*...*/).then(/*...*/).catch(/*...*/); // Mantenha o código da função bootSandbox igual
-    
-        // Cole o código completo da função bootSandbox da resposta anterior aqui
+        if (!sandboxRef.current) {
+            console.error("Referência do Sandbox não encontrada no bootSandbox");
+            setIsLoading(false); // Garante que paramos o loading se a ref sumir
+            setIsBootingSandbox(false);
+            setError("Erro interno: Não foi possível encontrar o container do sandbox.");
+            return;
+        };
+
+        // A chamada correta e única:
         sdk.embedProject(
-            sandboxRef.current,
-            {
+            sandboxRef.current, // O elemento DOM
+            { // Configurações do Projeto
                 title: "Protótipo Gerado pela Soo Tech",
                 template: "typescript",
                 files: {
@@ -116,18 +104,22 @@ export default function LiveSandbox() {
                     "App.tsx": appCode,
                 },
             },
-            {
+            { // Opções de Embed
                 openFile: "App.tsx",
                 view: "preview",
                 height: 500,
                 theme: "dark",
+                hideExplorer: true,
+                hideNavigation: true,
+                hideDevTools: true,
+                clickToLoad: false,
             }
         ).then(() => {
             console.log("Sandbox iniciado com sucesso.");
             setIsBootingSandbox(false);
         }).catch((err) => {
              console.error("Erro ao iniciar o StackBlitz:", err);
-             setIsLoadingAPI(false); 
+             setIsLoadingAPI(false);
              setIsBootingSandbox(false);
              setError(`Erro ao iniciar o ambiente: ${err.message}`);
         });
@@ -169,7 +161,7 @@ export default function LiveSandbox() {
     )
 }
 
-// Estilos (mantidos)
+// Estilos
 const textAreaStyle: React.CSSProperties = { width: "100%", minHeight: "100px", padding: "16px", background: "#151515", color: "#FFFFFF", border: "1px solid #333", borderRadius: "8px", fontFamily: "monospace", fontSize: "14px", boxSizing: "border-box" };
 const buttonStyle: React.CSSProperties = { width: "100%", padding: "16px", background: "#3EFF9B", color: "#0A0A0A", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "16px", fontWeight: "bold", marginTop: "8px" };
 const sandboxContainerStyle: React.CSSProperties = { width: "100%", height: "500px", background: "#0A0A0A", border: "1px solid #333", borderRadius: "8px", overflow: "hidden", position: 'relative' };
