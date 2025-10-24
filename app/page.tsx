@@ -1,16 +1,16 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 // Não precisamos mais do StackBlitz SDK ou useCompletion
 
 export default function LiveSandbox() {
     const [input, setInput] = useState("");
-    const [generatedHtml, setGeneratedHtml] = useState<string | null>(null); // Estado para guardar o HTML
+    const [generatedHtml, setGeneratedHtml] = useState<string | null>(null);
     const [isLoadingAPI, setIsLoadingAPI] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [submissionTrigger, setSubmissionTrigger] = useState(0); // Para saber quando o fetch terminou
+    const [submissionTrigger, setSubmissionTrigger] = useState(0); // Usado para re-trigger useEffect após fetch
 
-    // Função Fetch Manual (adaptada para HTML)
+    // Função Fetch Manual (sem mudanças na lógica de fetch)
     const fetchGeneratedHtml = async (prompt: string) => {
         setIsLoadingAPI(true);
         setError(null);
@@ -26,7 +26,6 @@ export default function LiveSandbox() {
             }
             if (!response.body) { throw new Error("Resposta da API vazia."); }
 
-            // Ler a stream de texto completa
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let htmlAccumulator = "";
@@ -38,22 +37,25 @@ export default function LiveSandbox() {
             }
             console.log("HTML final acumulado:", htmlAccumulator);
 
-            // Verifica se a IA retornou algo minimamente parecido com HTML
-            if (htmlAccumulator && htmlAccumulator.trim().toLowerCase().includes('<html>')) {
+            // --- CORREÇÃO AQUI ---
+            // Verifica se a string começa com <!doctype html (case-insensitive, trimmed)
+            if (htmlAccumulator && htmlAccumulator.trim().toLowerCase().startsWith('<!doctype html')) {
+                console.log("HTML Válido detectado. Atualizando estado.");
                 setGeneratedHtml(htmlAccumulator); // Define o estado com o HTML completo
             } else {
-                 console.error("Erro: A resposta da IA não parece ser HTML válido:", htmlAccumulator);
-                 setError("A IA respondeu, mas o formato não parece ser HTML válido.");
+                 console.error("Erro: A resposta da IA não começou com <!doctype html:", htmlAccumulator);
+                 setError("A IA respondeu, mas o formato não parece ser um documento HTML válido.");
                  setGeneratedHtml(null); // Garante que fique nulo
             }
+            // --- FIM DA CORREÇÃO ---
 
         } catch (err: any) {
             console.error("Erro durante o fetch ou leitura da stream:", err);
-            setError(err.message || "Erro desconhecido.");
+            setError(err.message || "Erro desconhecido ao buscar código.");
         } finally {
             setIsLoadingAPI(false);
             console.log("Fetch finalizado.");
-            setSubmissionTrigger(prev => prev + 1); // Dispara o useEffect
+            setSubmissionTrigger(prev => prev + 1); // Dispara o useEffect para renderizar (ou mostrar erro)
         }
     };
 
@@ -64,14 +66,14 @@ export default function LiveSandbox() {
         fetchGeneratedHtml(currentInput);
     };
 
-    // Interface (JSX - Com iframe e srcdoc)
+    // Interface (JSX - sem mudanças aqui, ela reage ao estado 'generatedHtml')
     return (
         <div style={{ width: "100%", fontFamily: "sans-serif", color: "white", background: "#0A0A0A", padding: "20px" }}>
             <form onSubmit={onFormSubmit} style={{ marginBottom: "16px" }}>
                 <textarea
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="Descreva a interface HTML que você quer prototipar..." // Atualizado placeholder
+                    placeholder="Descreva a interface HTML que você quer prototipar..."
                     style={textAreaStyle}
                     disabled={isLoadingAPI}
                 />
@@ -89,21 +91,22 @@ export default function LiveSandbox() {
                         Aguarde... Gerando código HTML com IA...
                     </div>
                 )}
+                {/* Renderiza o iframe APENAS se não estiver carregando E tiver HTML válido E não houver erro */}
                 {!isLoadingAPI && generatedHtml && !error && (
                     <iframe
                         srcDoc={generatedHtml} // INJETA O HTML AQUI
                         style={iframeStyle}
-                        sandbox="allow-scripts allow-same-origin" // Permite JS, mas restringe algumas coisas
+                        sandbox="allow-scripts allow-same-origin" // Permite JS básico
                         title="Protótipo Gerado por IA"
                     />
                 )}
+                {/* Mensagem inicial ou se o fetch terminou mas não gerou HTML válido */}
                 {!isLoadingAPI && !generatedHtml && !error && (
-                     <div style={loadingStyle}>Aguardando seu prompt...</div>
+                     <div style={loadingStyle}>
+                        {submissionTrigger > 0 ? "Falha ao gerar HTML válido." : "Aguardando seu prompt..."}
+                    </div>
                 )}
-                 {/* Mensagem se a IA retornou vazio, mesmo sem erro de fetch */}
-                 {!isLoadingAPI && generatedHtml === null && submissionTrigger > 0 && !error &&(
-                      <div style={loadingStyle}>A IA respondeu, mas o código HTML parece vazio ou inválido.</div>
-                 )}
+
             </div>
         </div>
     )
