@@ -3,10 +3,50 @@
 import React, { useState, useRef, useEffect } from "react";
 import sdk from "@stackblitz/sdk";
 
-// --- ARQUIVOS DE SISTEMA (Simplificados - Sem mudanças) ---
-const indexHtml = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>AI Prototype</title><link rel="stylesheet" href="styles.css"></head><body><div id="root"></div><script type="module" src="index.ts"></script></body></html>`;
-const indexTsx = `import React from 'react';\nimport ReactDOM from 'react-dom';\nimport App from './App';\nimport './styles.css';\n\nconst rootElement = document.getElementById('root');\n\nReactDOM.render(\n  <React.StrictMode>\n    <App />\n  </React.StrictMode>,\n  rootElement\n);`;
-const stylesCss = `body { font-family: sans-serif; background-color: #1e1e1e; color: white; margin: 0; padding: 0; } #root { padding: 1rem; }`;
+// --- ARQUIVOS DE SISTEMA (indexTsx simplificado) ---
+
+const indexHtml = `
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Prototype</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="index.ts"></script>
+  </body>
+</html>
+`;
+
+// index.tsx SIMPLIFICADO - Sem StrictMode
+const indexTsx = `
+import React from 'react';
+import ReactDOM from 'react-dom';
+import App from './App';
+import './styles.css';
+
+const rootElement = document.getElementById('root');
+
+// Renderiza DIRETAMENTE o App
+ReactDOM.render(<App />, rootElement);
+`;
+
+const stylesCss = `
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: #1e1e1e; /* Fundo escuro para o sandbox */
+  color: white;
+  margin: 0;
+  padding: 0;
+}
+#root {
+  padding: 1rem;
+}
+`;
 // --- FIM DOS ARQUIVOS DE SISTEMA ---
 
 export default function LiveSandbox() {
@@ -19,7 +59,7 @@ export default function LiveSandbox() {
     const hasBootedRef = useRef(false);
     const [submissionTrigger, setSubmissionTrigger] = useState(0);
 
-    // Função Fetch Manual
+    // Função Fetch Manual (sem mudanças)
     const fetchGeneratedCode = async (prompt: string) => {
         setIsLoadingAPI(true);
         setError(null);
@@ -64,7 +104,7 @@ export default function LiveSandbox() {
         fetchGeneratedCode(currentInput);
     };
 
-    // useEffect para iniciar o Sandbox
+    // useEffect para iniciar o Sandbox (sem mudanças)
     useEffect(() => {
         if (submissionTrigger > 0 && !isLoadingAPI && !hasBootedRef.current) {
             hasBootedRef.current = true;
@@ -81,29 +121,28 @@ export default function LiveSandbox() {
         }
     }, [submissionTrigger, isLoadingAPI, error]);
 
-    // Função bootSandbox (COM A CORREÇÃO setIsLoading -> setIsLoadingAPI)
+    // Função bootSandbox (usando o template 'typescript' e arquivos simplificados)
     const bootSandbox = (appCode: string) => {
         if (!sandboxRef.current) {
             console.error("Referência do Sandbox não encontrada no bootSandbox");
-            setIsLoadingAPI(false); // <-- CORREÇÃO AQUI
+            setIsLoadingAPI(false);
             setIsBootingSandbox(false);
             setError("Erro interno: Não foi possível encontrar o container do sandbox.");
             return;
         };
-
         sdk.embedProject(
             sandboxRef.current,
             {
                 title: "Protótipo Gerado pela Soo Tech",
-                template: "typescript",
+                template: "typescript", // Mantemos typescript
                 files: {
                     "index.html": indexHtml,
-                    "index.ts": indexTsx,
+                    "index.ts": indexTsx,   // Passa o NOVO conteúdo simplificado
                     "styles.css": stylesCss,
                     "App.tsx": appCode,
                 },
             },
-            {
+            { // Opções de Embed (mantidas)
                 openFile: "App.tsx",
                 view: "preview",
                 height: 500,
@@ -116,10 +155,9 @@ export default function LiveSandbox() {
         ).then(() => {
             console.log("Sandbox iniciado com sucesso.");
             setIsBootingSandbox(false);
-            // Não resetamos isLoadingAPI aqui, pois o fetch já terminou
         }).catch((err) => {
              console.error("Erro ao iniciar o StackBlitz:", err);
-             setIsLoadingAPI(false); // Garante reset em caso de erro no StackBlitz
+             setIsLoadingAPI(false);
              setIsBootingSandbox(false);
              setError(`Erro ao iniciar o ambiente: ${err.message}`);
         });
@@ -128,7 +166,7 @@ export default function LiveSandbox() {
     // Estado geral de loading
     const isOverallLoading = isLoadingAPI || isBootingSandbox;
 
-    // Interface (JSX)
+    // Interface (JSX - sem mudanças)
     return (
         <div style={{ width: "100%", fontFamily: "sans-serif", color: "white", background: "#0A0A0A", padding: "20px" }}>
             <form onSubmit={onFormSubmit} style={{ marginBottom: "16px" }}>
