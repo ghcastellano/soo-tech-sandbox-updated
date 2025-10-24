@@ -3,14 +3,17 @@ const nextConfig = {
   async headers() {
     return [
       {
-        // Aplica esta regra a todas as páginas do seu app Vercel
         source: '/:path*',
         headers: [
           {
             key: 'Content-Security-Policy',
-            // Permite 'self' (o próprio domínio) e QUALQUER subdomínio de 'framer.app' e 'framer.ai'.
-            // Isso cobre o editor do Framer e seu site publicado.
-            value: "frame-ancestors 'self' https://*.framer.app https://*.framer.ai;",
+            
+            // CORREÇÃO: Adicionando 'https://framer.com' para permitir o editor do Framer.
+            // Também mantemos 'https://*.framer.app' para o seu site publicado 
+            // e adicionamos 'https://*.framer.website' como garantia.
+            
+            value:
+              "frame-ancestors 'self' https://framer.com https://*.framer.app https://*.framer.website;",
           },
         ],
       },
