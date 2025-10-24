@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Soo Tech AI Blueprint",
-  description: "Gerador de Blueprint de Soluções de IA",
+  description: "Gerador de Blueprint de Soluções de IA ",
 };
 
 export default function RootLayout({
