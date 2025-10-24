@@ -1,5 +1,5 @@
 {
-  "name": "soo-tech-blueprint-generator",
+  "name": "soo-tech-sandbox-ai",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -13,12 +13,16 @@
     "react-dom": "18.2.0",
     "next": "16.0.0",
     "ai": "latest",
-    "@ai-sdk/openai": "latest"
+    "@ai-sdk/openai": "latest",
+    "@ai-sdk/react": "latest",
+    "react-markdown": "latest",
+    "remark-gfm": "latest"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "18.2.0",
     "@types/react-dom": "18.2.0",
+    "@types/react-markdown": "latest",
     "typescript": "^5"
   }
 }
