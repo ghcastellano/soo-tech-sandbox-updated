@@ -39,7 +39,7 @@ const stylesCss = `
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
     Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  background-color: #1e1e1e;
+  background-color: #1e1e1e; /* Fundo escuro para o sandbox */
   color: white;
   margin: 0;
   padding: 0;
@@ -51,52 +51,76 @@ body {
 // --- FIM DOS ARQUIVOS DE SISTEMA ---
 
 export default function LiveSandbox() {
-    const [isLoadingCompletion, setIsLoadingCompletion] = useState(false); // Renomeado para evitar conflito
-    const [isBootingSandbox, setIsBootingSandbox] = useState(false); // Estado para loading do sandbox
+    const [isSubmitting, setIsSubmitting] = useState(false); // NOVO ESTADO: Controla se enviamos o form
+    const [isBootingSandbox, setIsBootingSandbox] = useState(false);
     const sandboxRef = useRef<HTMLDivElement>(null);
-    const hasBootedRef = useRef(false); // Para garantir que o boot ocorra apenas uma vez por resposta
+    const hasBootedRef = useRef(false); // Para garantir um boot por submissão
 
     const {
         input,
         handleInputChange,
-        handleSubmit: handleTriggerCompletion, // Renomeado para clareza
-        completion,
-        isLoading: isLoadingCompletionHook, // Renomeado para evitar conflito
-        error, // Vamos usar o estado de erro do hook
+        handleSubmit: handleTriggerCompletion, // Função que chama a API
+        completion,                             // O código gerado (string)
+        isLoading: isLoadingCompletionHook,      // Boolean: A API está processando?
+        error,                                  // Objeto de erro da API
     } = useCompletion({
         api: "/api/generateApp",
-        // NÃO usaremos mais onFinish ou onError aqui para o boot
+        // Removemos onFinish e onError daqui, vamos controlar com useEffect
     });
 
-    // Atualiza nosso estado de loading baseado no hook
-    useEffect(() => {
-        setIsLoadingCompletion(isLoadingCompletionHook);
-        if (isLoadingCompletionHook) {
-            hasBootedRef.current = false; // Reseta o flag de boot quando uma nova requisição começa
+    // Função chamada ao submeter o formulário
+    const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (!input.trim()) return; // Não envia se o input estiver vazio
+
+        setIsSubmitting(true);       // Marca que começamos a submissão
+        setIsBootingSandbox(false);    // Garante que o estado de boot esteja resetado
+        hasBootedRef.current = false; // Permite um novo boot
+        if (sandboxRef.current) {
+            sandboxRef.current.innerHTML = ""; // Limpa o sandbox anterior
         }
-    }, [isLoadingCompletionHook]);
+        handleTriggerCompletion(e);     // Chama a API
+    };
 
-    // O useEffect que vai iniciar o Sandbox QUANDO a requisição terminar E tivermos código
+    // useEffect para lidar com o FIM da requisição da API
     useEffect(() => {
-        // Condições: Não está mais carregando da API, temos código no 'completion', e ainda não iniciamos o boot
-        if (!isLoadingCompletion && completion && completion.trim().length > 0 && !hasBootedRef.current) {
-            console.log("Completion finalizado, iniciando boot do sandbox com o código:", completion);
-            setIsBootingSandbox(true); // Ativa o loading específico do sandbox
-            hasBootedRef.current = true; // Marca que o boot foi iniciado para esta resposta
-            bootSandbox(completion);
-        } else if (!isLoadingCompletion && completion === "" && !hasBootedRef.current && input) {
-            // Caso especial: A API terminou, mas retornou vazio (após o input ter sido enviado)
-             if (!isLoadingCompletionHook && !hasBootedRef.current && input !== "") { // Verifica se já houve input
-                 console.error("Erro detectado no useEffect: Código final vazio após conclusão.");
-                 setIsLoadingCompletion(false);
-                 setIsBootingSandbox(false);
-                 alert("Erro: A IA respondeu, mas o código final está vazio. Verifique os logs do Vercel. Pode ser um erro no prompt ou na IA.");
-             }
+        // Roda apenas se:
+        // 1. Nós tínhamos submetido o formulário (isSubmitting === true)
+        // 2. A biblioteca 'ai' diz que não está mais carregando (isLoadingCompletionHook === false)
+        if (isSubmitting && !isLoadingCompletionHook) {
+            console.log("Hook useCompletion finalizou. Estado 'completion':", completion);
+
+            // Verifica se recebemos algum código E se ainda não bootamos o sandbox para esta resposta
+            if (completion && completion.trim().length > 0 && !hasBootedRef.current) {
+                console.log("Código válido recebido. Iniciando boot do sandbox...");
+                setIsBootingSandbox(true);   // Ativa o loading do sandbox
+                hasBootedRef.current = true; // Marca que já iniciamos o boot
+                bootSandbox(completion);
+            }
+            // Verifica se a API terminou mas retornou vazio (e não foi um erro de rede capturado pelo 'error' state)
+            else if ((!completion || completion.trim().length === 0) && !error && !hasBootedRef.current) {
+                console.error("Erro detectado no useEffect: Código final vazio após submissão bem-sucedida (sem erro de API).");
+                alert("Erro: A IA respondeu, mas o código final está vazio. Verifique os logs do Vercel. Pode ser um erro no prompt ou na IA.");
+                hasBootedRef.current = true; // Marca como tratado para não repetir o alerta
+            }
+            // Importante: Resetar o estado de submissão APÓS processar o resultado (sucesso, vazio ou erro abaixo)
+            setIsSubmitting(false);
         }
-    }, [isLoadingCompletion, completion, input]); // Depende do loading e do completion
+    }, [isSubmitting, isLoadingCompletionHook, completion, error]); // Adicionado 'error' às dependências
 
+    // useEffect separado para lidar com erros de API reportados pelo hook
+    useEffect(() => {
+        if (error) {
+            console.error("Erro recebido do hook useCompletion:", error);
+            setIsSubmitting(false); // Garante que resetamos o estado de submissão
+            setIsBootingSandbox(false);
+            alert(`Erro ao comunicar com a IA: ${error.message}. Verifique o console e os logs do Vercel.`);
+            // Marcamos como "booted" para evitar que o outro useEffect dispare o alerta de código vazio
+            hasBootedRef.current = true;
+        }
+    }, [error]);
 
-    // Função que "inicia" o sandbox do StackBlitz (sem mudanças aqui)
+    // Função que "inicia" o sandbox do StackBlitz
     const bootSandbox = (appCode: string) => {
         if (!sandboxRef.current) return;
         sdk.embedProject(
@@ -121,26 +145,17 @@ export default function LiveSandbox() {
             setIsBootingSandbox(false); // Desativa o loading do sandbox quando termina
         }).catch((err) => {
              console.error("Erro ao iniciar o StackBlitz:", err);
-             setIsLoadingCompletion(false);
+             // Reseta todos os loadings em caso de erro no StackBlitz
+             setIsSubmitting(false);
              setIsBootingSandbox(false);
              alert(`Erro ao iniciar o ambiente de prototipagem: ${err.message}`);
         })
     };
 
-    const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setIsLoadingCompletion(true); // Ativa o loading da API
-        setIsBootingSandbox(false); // Garante que o loading do sandbox esteja desligado
-        hasBootedRef.current = false; // Permite um novo boot
-        if (sandboxRef.current) {
-            sandboxRef.current.innerHTML = ""; // Limpa o sandbox anterior
-        }
-        handleTriggerCompletion(e); // Chama a API
-    };
+    // Estado geral de loading (API ou Sandbox)
+    const isLoading = isSubmitting || isBootingSandbox;
 
-    // Define o estado geral de loading
-    const isLoading = isLoadingCompletion || isBootingSandbox;
-
+    // A Interface do Usuário (JSX)
     return (
         <div style={{ width: "100%", fontFamily: "sans-serif", color: "white", background: "#0A0A0A", padding: "20px" }}>
             <form onSubmit={onFormSubmit} style={{ marginBottom: "16px" }}>
@@ -149,31 +164,33 @@ export default function LiveSandbox() {
                     onChange={handleInputChange}
                     placeholder="Descreva a interface que você quer prototipar..."
                     style={textAreaStyle}
-                    disabled={isLoading}
+                    disabled={isLoading} // Desabilita enquanto carrega
                 />
-                <button type="submit" style={buttonStyle} disabled={isLoading}>
-                    {isLoading ? (isLoadingCompletion ? "Gerando Código..." : "Compilando Protótipo...") : "Gerar Protótipo ao Vivo"}
+                <button type="submit" style={buttonStyle} disabled={isLoading || !input.trim()}> {/* Desabilita se estiver carregando ou vazio */}
+                    {/* Texto do botão muda conforme o estado */}
+                    {isLoadingCompletionHook ? "Gerando Código..." : (isBootingSandbox ? "Compilando Protótipo..." : "Gerar Protótipo ao Vivo")}
                 </button>
             </form>
 
-            {/* Mostra erro da API se houver */}
-             {error && (
-                <div style={{ color: 'red', marginBottom: '10px', whiteSpace: 'pre-wrap' }}>
-                    Erro da API: {error.message}
+             {/* Mostra erro da API (se houver e não estiver carregando) */}
+             {error && !isLoading && (
+                <div style={{ color: 'red', marginBottom: '10px', whiteSpace: 'pre-wrap', border: '1px solid red', padding: '10px', borderRadius: '4px' }}>
+                    <strong>Erro da API:</strong> {error.message}
                 </div>
              )}
 
+            {/* Container do Sandbox */}
             <div ref={sandboxRef} id="sandbox-container" style={sandboxContainerStyle}>
-                {/* Mensagem de Loading mais detalhada */}
+                {/* Mensagem de Loading */}
                 {isLoading && (
                     <div style={loadingStyle}>
-                        {isLoadingCompletion ? "Aguarde... Gerando código com IA..." : "Iniciando servidor virtual e compilando..."}
+                        {isLoadingCompletionHook ? "Aguarde... Gerando código com IA..." : "Iniciando servidor virtual e compilando..."}
                         <br/>
                         (Isso pode levar até 30 segundos)
                     </div>
                 )}
-                 {/* Mensagem inicial */}
-                {!isLoading && !completion && !error && (
+                 {/* Mensagem Inicial (Apenas se não estiver carregando e o sandbox estiver vazio) */}
+                {!isLoading && (!sandboxRef.current || sandboxRef.current.innerHTML === "") && (
                      <div style={loadingStyle}>Aguardando seu prompt...</div>
                 )}
             </div>
@@ -181,7 +198,7 @@ export default function LiveSandbox() {
     )
 }
 
-// Estilos (mantidos - copie da sua versão anterior)
+// Estilos (mantidos)
 const textAreaStyle: React.CSSProperties = {
     width: "100%", minHeight: "100px", padding: "16px", background: "#151515",
     color: "#FFFFFF", border: "1px solid #333", borderRadius: "8px",
@@ -194,10 +211,11 @@ const buttonStyle: React.CSSProperties = {
 };
 const sandboxContainerStyle: React.CSSProperties = {
     width: "100%", height: "500px", background: "#0A0A0A",
-    border: "1px solid #333", borderRadius: "8px", overflow: "hidden",
+    border: "1px solid #333", borderRadius: "8px", overflow: "hidden", position: 'relative' /* Ajuda a conter o loading */
 };
 const loadingStyle: React.CSSProperties = {
-    height: "100%", display: "flex", flexDirection: "column",
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, // Centraliza
+    display: "flex", flexDirection: "column",
     alignItems: "center", justifyContent: "center", textAlign: "center",
-    color: "#888", fontSize: "14px",
+    color: "#888", fontSize: "14px", background: '#0A0A0A' // Garante fundo
 };
