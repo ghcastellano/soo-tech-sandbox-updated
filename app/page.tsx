@@ -108,7 +108,7 @@ export default function LiveSandbox() {
             sandboxRef.current,
             {
                 title: "Protótipo Gerado pela Soo Tech",
-                template: "typescript",
+                template: "node",
                 files: {
                     "index.html": indexHtml,
                     "index.ts": indexTsx,
