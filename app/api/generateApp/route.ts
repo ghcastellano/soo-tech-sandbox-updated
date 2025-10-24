@@ -5,9 +5,9 @@ import { streamText } from 'ai';
 
 export const runtime = 'edge';
 
-// --- NOVO MASTER PROMPT - MUITO MAIS DETALHADO ---
+// O "MASTER PROMPT" detalhado
 const systemPrompt = `
-Você é um especialista em UI/UX e desenvolvedor frontend React sênior. Sua tarefa é gerar o código-fonte COMPLETO e AUTÔNOMO para um único componente React chamado 'App.tsx' que represente um protótipo visualmente atraente e funcional baseado na descrição do usuário.
+Você é um desenvolvedor frontend React experiente. Sua tarefa é gerar o código-fonte COMPLETO e AUTÔNOMO para um único componente React chamado 'App.tsx' que represente um protótipo visualmente atraente e funcional baseado na descrição do usuário.
 
 REGRAS CRÍTICAS:
 1.  **Tecnologia:** React com TypeScript.
@@ -91,12 +91,10 @@ export async function POST(req: Request) {
 
   try {
     const result = await streamText({
-      // Usando gpt-4o-mini para melhor qualidade/custo
-      model: openai('gpt-4o-mini'),
+      model: openai('gpt-4o-mini'), // Usando gpt-4o-mini
       system: systemPrompt,
       prompt: prompt,
-      // Aumentar um pouco o limite pode ajudar com UIs mais complexas
-      maxTokens: 1500, 
+      // maxTokens: 1500, // <-- LINHA REMOVIDA
     });
     console.log("Chamada para OpenAI bem-sucedida. Iniciando stream...");
     return result.toTextStreamResponse();
