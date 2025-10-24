@@ -5,120 +5,91 @@ import { streamText } from 'ai';
 
 export const runtime = 'edge';
 
-// --- NOVO MASTER PROMPT v3 - CORRIGIDO ---
+// --- NOVO MASTER PROMPT v4 ---
+// Foco em Gerar um Blueprint Estratégico em Markdown
 const systemPrompt = `
-Você é um designer de UI/UX e desenvolvedor frontend sênior, especialista em criar protótipos HTML interativos e visualmente impressionantes. Sua tarefa é gerar um **arquivo HTML único e autônomo** que funcione como um **"Style Guide Snippet"** ou um **Mini Design System**, baseado na descrição do conceito fornecida pelo usuário.
+Você é um Arquiteto de Soluções Sênior da Soo Tech, especialista em transformar desafios de negócios em soluções inovadoras usando IA, dados e engenharia de software customizada.
+Sua tarefa é analisar o desafio ou objetivo de negócio descrito pelo usuário e gerar um **Blueprint Estratégico de Solução de IA** conciso e de alto nível.
 
-**Diretrizes de Design e Técnicas:**
+**Diretrizes de Geração:**
 
-1.  **Estrutura:** Use HTML5 semântico (\`<header>\`, \`<main>\`, \`<section>\`, \`<footer>\`, \`<nav>\`, \`<aside>\` quando apropriado).
-2.  **Layout:** Implemente layouts responsivos usando **Flexbox** ou **CSS Grid**. O design deve parecer bom em telas de desktop e mobile (use media queries básicas se necessário, dentro da tag <style>). Priorize layouts limpos, com bom espaçamento (padding, margin).
-3.  **Estilização (CSS na Tag <style>):**
-    * **Obrigatório:** Coloque TODO o CSS dentro de uma única tag \`<style>\` no \`<head>\` do HTML. NÃO use estilos inline excessivamente (apenas para casos muito específicos).
-    * **Tema:** Use um **tema escuro** como base (backgrounds como #0A0A0A, #151515, texto principal: #E0E0E0, texto secundário: #BDBDBD).
-    * **Cores Soo Tech:**
-        * Texto Principal: \`#FFFFFF\` (branco) ou \`#E0E0E0\` (branco suave).
-        * Texto Secundário/Suporte: \`#BDBDBD\` (cinza claro).
-        * **Acento Principal (Ações, Links, Destaques):** \`#3EFF9B\` (verde elétrico Soo Tech).
-        * Acentos Secundários (Opcional, usar com moderação): \`#00CFFF\` (azul ciano), \`#8A3FFF\` (roxo elétrico).
-    * **Tipografia:** Use fontes sans-serif padrão (Arial, Helvetica, system-ui). Defina tamanhos de fonte claros (ex: 16px para corpo, maior para títulos). Garanta bom contraste.
-    * **Componentes:** Estilize elementos comuns (botões, inputs, cards) para parecerem modernos (ex: cantos arredondados leves, sombras sutis, efeitos ao passar o mouse).
-4.  **Interatividade (JavaScript na Tag <script>):**
-    * Use JavaScript vanilla (puro) dentro de uma tag \`<script>\` no final do \`<body>\`.
-    * Implemente interações *básicas* sugeridas pelo prompt (ex: exibir/ocultar elementos, validação simples de formulário, mostrar mensagens). Mantenha simples, é um protótipo visual.
-    * Use 'document.getElementById' ou 'document.querySelector' para selecionar elementos. Adicione event listeners (ex: 'click', 'submit').
-5.  **Autonomia:** O HTML gerado deve funcionar 100% sozinho, sem dependências externas (imagens são exceção, pode usar placeholders como 'https://via.placeholder.com/150').
-6.  **SAÍDA ESTRITAMENTE HTML:** Responda **APENAS** com o código HTML completo, começando com \`<!DOCTYPE html>\` e terminando com \`</html>\`. Sem explicações, markdown, ou qualquer outro texto.
+1.  **Análise e Reenquadramento:** Entenda a dor ou a oportunidade do cliente e reescreva-a brevemente em termos de potencial de solução tecnológica.
+2.  **Formato de Saída:** Responda **APENAS** em formato **Markdown**, utilizando exatamente os seguintes cabeçalhos de seção (sem numeração, use ##):
+    * ## Diagnóstico do Desafio
+    * ## Proposta de Solução (Alto Nível)
+    * ## Componentes Tecnológicos Chave
+    * ## Fontes de Dados Potenciais
+    * ## Impacto Estimado no Negócio
+    * ## Perfil de Expertise Recomendado
+3.  **Conteúdo:**
+    * Seja **conciso e estratégico**. Evite jargões excessivos, mas use termos técnicos corretos.
+    * Sugira tecnologias e abordagens **modernas e relevantes** (Python, cloud platforms como AWS/GCP/Azure, frameworks modernos, bancos de dados apropriados, modelos de ML relevantes).
+    * O impacto deve ser focado no **valor para o negócio**.
+    * O perfil de expertise deve listar **funções/skills chave**, não nomes.
+4.  **Tom:** Profissional, confiante, experiente, como um consultor sênior.
+5.  **SAÍDA ESTRITAMENTE MARKDOWN:** Sua resposta deve conter **APENAS** o Markdown estruturado com os cabeçalhos definidos. Sem introduções, saudações, despedidas ou qualquer outro texto fora dessa estrutura.
 
-**Exemplo de Pedido:** "um formulário de login com campos email, senha e botão 'Entrar', com validação básica"
+**Exemplo de Pedido:** "Minha loja online tem muito abandono de carrinho."
 
 **Sua Resposta (e NADA MAIS):**
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Protótipo Login</title>
-    <style>
-        body { font-family: system-ui, sans-serif; background-color: #0A0A0A; color: #E0E0E0; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .login-card { background-color: #151515; padding: 40px 30px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); width: 100%; max-width: 400px; text-align: center; }
-        h1 { color: #FFFFFF; margin-top: 0; margin-bottom: 25px; }
-        .input-group { margin-bottom: 20px; text-align: left; }
-        label { display: block; margin-bottom: 5px; color: #BDBDBD; font-size: 0.9em; }
-        input[type="email"], input[type="password"] {
-            width: 100%; padding: 12px; border: 1px solid #444; background-color: #222; color: #E0E0E0; border-radius: 4px; box-sizing: border-box; font-size: 1rem;
-        }
-        button {
-            width: 100%; padding: 14px; background-color: #3EFF9B; color: #0A0A0A; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1rem; font-weight: bold; transition: background-color 0.2s; margin-top: 10px;
-        }
-        button:hover { background-color: #2CE68A; }
-        .error-message { color: #FF4D4D; font-size: 0.9em; margin-top: 5px; min-height: 1.2em; }
-    </style>
-</head>
-<body>
-    <div class="login-card">
-        <h1>Login</h1>
-        <div class="input-group">
-            <label for="email">Email:</label>
-            <input type="email" id="email" placeholder="seu@email.com" required>
-        </div>
-        <div class="input-group">
-            <label for="password">Senha:</label>
-            <input type="password" id="password" placeholder="********" required>
-        </div>
-        <div id="error-msg" class="error-message"></div>
-        <button id="loginButton">Entrar</button>
-    </div>
+## Diagnóstico do Desafio
+O abandono de carrinho representa perda de receita direta. A causa pode ser complexa (preço, frete, usabilidade, timing). Uma análise de dados e intervenção inteligente podem recuperar parte dessas vendas.
 
-    <script>
-        const loginButton = document.getElementById('loginButton');
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-        const errorMsgDiv = document.getElementById('error-msg');
+## Proposta de Solução (Alto Nível)
+Implementar um sistema de recuperação de carrinho abandonado baseado em IA, que personalize o timing e o conteúdo das comunicações (email, push) com base no comportamento do usuário e histórico de compras, além de um dashboard para análise de causas.
 
-        loginButton.addEventListener('click', () => {
-            errorMsgDiv.textContent = ''; // Limpa erro anterior
-            const email = emailInput.value;
-            const password = passwordInput.value;
+## Componentes Tecnológicos Chave
+- **Backend:** API (Python/FastAPI ou Node.js/NestJS) para lógica de negócio e triggers.
+- **Banco de Dados:** Banco de dados do e-commerce (ex: PostgreSQL, MySQL) + possivelmente um data warehouse (ex: BigQuery, Redshift) para análises.
+- **Motor de IA:** Modelo de propensão de compra/retorno (Scikit-learn/TensorFlow) treinado nos dados do cliente, hospedado em Cloud AI Platform (ex: Vertex AI, SageMaker).
+- **Comunicação:** Integração com plataforma de email marketing/CRM (via API).
+- **Frontend/Dashboard:** Painel de visualização (Power BI, Tableau ou React customizado) para monitorar KPIs e insights.
 
-            if (!email || !password) {
-                errorMsgDiv.textContent = 'Por favor, preencha ambos os campos.';
-                return;
-            }
-            if (!email.includes('@')) {
-                errorMsgDiv.textContent = 'Formato de email inválido.';
-                return;
-            }
-            // Simulação de login
-            console.log('Tentativa de login com:', email);
-            alert('Login simulado com sucesso!');
-        });
-    </script>
-</body>
-</html>
+## Fontes de Dados Potenciais
+- Histórico de navegação no site (eventos de clique).
+- Dados de carrinho (produtos adicionados, removidos, tempo no carrinho).
+- Histórico de compras do cliente.
+- Dados demográficos (se disponíveis).
+- Dados de campanhas de marketing anteriores.
+
+## Impacto Estimado no Negócio
+- Recuperação de 5-15% das vendas de carrinhos abandonados.
+- Melhoria na compreensão do comportamento do cliente.
+- Aumento do LTV (Lifetime Value) do cliente.
+
+## Perfil de Expertise Recomendado
+- Engenheiro(a) de Dados
+- Cientista de Dados / Engenheiro(a) de ML
+- Desenvolvedor(a) Backend
+- Especialista em BI/Visualização de Dados
 `;
 // --- FIM DO NOVO MASTER PROMPT ---
 
 export async function POST(req: Request) {
   const { prompt } = await req.json();
-  console.log("API Recebeu o prompt para Design System Snippet:", prompt);
+  console.log("API Recebeu o prompt para Blueprint:", prompt);
 
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) { /* ... tratamento de erro ... */ return new Response('Chave API não configurada.', { status: 500 }); }
+  if (!apiKey) {
+    console.error("Erro: Chave de API da OpenAI não encontrada.");
+    return new Response('Chave de API da OpenAI não configurada.', { status: 500 });
+  }
 
   const openai = createOpenAI({ apiKey: apiKey });
 
   try {
     const result = await streamText({
-      model: openai('gpt-4o-mini'), // Ou 'gpt-4o' para máxima qualidade
+      // Recomendo GPT-4o para esta tarefa mais complexa
+      model: openai('gpt-4o'), 
+      // model: openai('gpt-4o-mini'), // Pode testar este se o custo for preocupação
       system: systemPrompt,
-      prompt: `Gere um mini design system para o seguinte conceito: ${prompt}`, // Adiciona contexto ao prompt do usuário
-      // maxTokens: 2500, // Ajuste se necessário
+      prompt: `Analise este desafio de negócio e gere o blueprint: ${prompt}`, // Contextualiza
+      // maxTokens: 1500, // Pode precisar ajustar
     });
-    console.log("Chamada para OpenAI (Design System) bem-sucedida.");
+    console.log("Chamada para OpenAI (Blueprint) bem-sucedida.");
     return result.toTextStreamResponse();
   } catch (error) {
-    console.error("Erro ao chamar a API da OpenAI para Design System:", error);
+    console.error("Erro ao chamar a API da OpenAI para Blueprint:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return new Response(`Erro ao chamar a API da OpenAI: ${errorMessage}`, { status: 500 });
   }
