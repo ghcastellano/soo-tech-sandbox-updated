@@ -1,10 +1,13 @@
 /** @type {import('tailwindcss').Config} */
+
 module.exports = {
+  mode: "jit",
+  darkMode: "class",
   content: [
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.tsx",
+    "./components/**/*.tsx",
+    "./pages/**/*.tsx",
+    "./src/**/*.tsx",
   ],
   theme: {
     extend: {
@@ -12,12 +15,10 @@ module.exports = {
         primary: "#6AF586",
         dark: "#0B0B0F",
       },
+      backdropBlur: {
+        xs: "2px",
+      }
     },
   },
-  safelist: [
-    {
-      pattern: /./,
-    },
-  ],
   plugins: [],
 };
