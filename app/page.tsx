@@ -1,123 +1,76 @@
 "use client";
 
-import { useState, useRef } from "react";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import { useState } from "react";
+import "./globals.css";
 
 export default function Home() {
   const [descricao, setDescricao] = useState("");
   const [loading, setLoading] = useState(false);
   const [resultado, setResultado] = useState("");
 
-  const resultadoRef = useRef<HTMLDivElement | null>(null);
-
   async function gerar() {
     if (!descricao.trim()) return;
     setLoading(true);
     setResultado("");
 
-    try {
-      const res = await fetch("/api/diagnostico", {
-        method: "POST",
-        body: JSON.stringify({ descricao }),
-        headers: { "Content-Type": "application/json" },
-      });
+    const res = await fetch("/api/diagnostico", {
+      method: "POST",
+      body: JSON.stringify({ descricao }),
+      headers: { "Content-Type": "application/json" }
+    });
 
-      const reader = res.body!.getReader();
-      const decoder = new TextDecoder();
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        setResultado((prev) => prev + decoder.decode(value));
-      }
-    } catch (error) {
-      console.error(error);
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      setResultado(prev => prev + decoder.decode(value));
     }
 
     setLoading(false);
   }
 
-  async function exportarPDF() {
-    if (!resultadoRef.current) return;
-
-    const canvas = await html2canvas(resultadoRef.current, {
-      scale: 2,
-      backgroundColor: "#0E1117",
-    });
-
-    const pdf = new jsPDF("p", "mm", "a4");
-    const imgData = canvas.toDataURL("image/png");
-
-    const pdfWidth = 210;
-    const imgProps = {
-      ratio: canvas.width / canvas.height,
-    };
-
-    const pdfHeight = pdfWidth / imgProps.ratio;
-    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-
-    const filename = `Diagnostico-SooTech-${new Date()
-      .toISOString()
-      .replace(/[:.]/g, "-")}.pdf`;
-
-    pdf.save(filename);
-  }
-
   return (
-    <main className="min-h-screen bg-[#0E1117] text-white flex flex-col items-center justify-center p-6">
-      <div className="max-w-4xl w-full text-center mb-10">
-        <h1 className="text-4xl md:text-5xl font-bold">
-          Diagnóstico Inteligente Soo Tech com IA
-        </h1>
-        <p className="text-gray-300 mt-4 text-lg">
-          Avaliação consultiva personalizada para acelerar seus resultados usando IA.
+    <main className="flex flex-col items-center justify-center px-4 py-10 max-w-4xl mx-auto text-center">
+      <h1 className="text-4xl font-bold">
+        Diagnóstico Inteligente <span className="text-brand-500">Soo Tech</span>
+      </h1>
+
+      <p className="text-neutral-400 mt-3 mb-8">
+        Entenda como a IA pode acelerar seus resultados.
+      </p>
+
+      <textarea
+        placeholder="Descreva seu desafio..."
+        className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:ring-2 focus:ring-brand-500 outline-none min-h-[140px]"
+        value={descricao}
+        onChange={(e) => setDescricao(e.target.value)}
+      />
+
+      <button
+        onClick={gerar}
+        disabled={loading}
+        className="mt-6 bg-brand-500 w-full py-4 rounded-xl font-semibold text-black hover:opacity-90 disabled:opacity-50"
+      >
+        {loading ? "Gerando análise…" : "Gerar Diagnóstico IA"}
+      </button>
+
+      {loading && (
+        <p className="mt-4 animate-pulse text-brand-500">
+          ▲ Analisando seu caso…
         </p>
-      </div>
+      )}
 
-      <div className="bg-[#1A1F26] max-w-4xl w-full p-8 rounded-2xl shadow-xl">
-        <textarea
-          className="w-full h-40 p-4 rounded-lg bg-[#111418] text-white outline-none border border-gray-700 focus:border-green-500 transition-all"
-          placeholder="Ex.: Somos uma fintech e queremos IA para reduzir fraude sem piorar o UX..."
-          value={descricao}
-          onChange={(e) => setDescricao(e.target.value)}
-        />
+      {resultado && (
+        <pre className="bg-neutral-900/70 p-6 mt-8 rounded-xl border border-neutral-800 text-left whitespace-pre-wrap">
+          {resultado}
+        </pre>
+      )}
 
-        <button
-          onClick={gerar}
-          disabled={loading}
-          className="mt-6 w-full py-4 rounded-xl text-xl font-semibold bg-green-500 text-black hover:bg-green-400 disabled:bg-gray-700 disabled:text-gray-400 transition-all"
-        >
-          {loading ? "Gerando Diagnóstico…" : "Gerar Diagnóstico IA"}
-        </button>
-
-        {loading && (
-          <p className="text-center mt-4 text-green-400 animate-pulse">
-            📡 Analisando sua oportunidade…
-          </p>
-        )}
-
-        {resultado && (
-          <div>
-            <div
-              ref={resultadoRef}
-              className="mt-8 bg-black/20 p-6 rounded-lg border border-gray-700 text-left whitespace-pre-wrap"
-            >
-              {resultado}
-            </div>
-
-            <button
-              onClick={exportarPDF}
-              className="mt-4 w-full py-3 text-lg rounded-lg font-semibold bg-green-500 hover:bg-green-400 text-black"
-            >
-              📄 Exportar Diagnóstico em PDF
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div className="text-gray-500 text-xs mt-6">
+      <footer className="text-xs text-neutral-600 mt-10">
         Powered by Soo Tech AI ⚡
-      </div>
+      </footer>
     </main>
   );
 }
