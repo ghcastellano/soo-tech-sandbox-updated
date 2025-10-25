@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Diagnóstico Inteligente Soo Tech",
-  description: "Acelere seus resultados com IA aplicada ao seu negócio."
+  description: "Avaliação consultiva personalizada para acelerar resultados com IA."
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
