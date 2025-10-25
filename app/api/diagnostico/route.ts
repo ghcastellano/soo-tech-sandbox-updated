@@ -16,8 +16,6 @@ Você é um consultor sênior da Soo Tech. Gere um diagnóstico executivo, conci
 Responda ESTRITAMENTE em JSON único e válido (um único objeto), no formato:
 
 {
-  "titulo": "Diagnóstico Inteligente Soo Tech",
-  "subtitulo": "Uma linha de valor",
   "oportunidade": { "titulo": "Oportunidade Tecnológica", "descricao": "..." },
   "beneficios": ["...", "...", "...", "..."],
   "kpis": [
@@ -50,21 +48,19 @@ Regras:
     });
 
     const raw = completion.choices[0]?.message?.content ?? "{}";
-    // Garantir JSON
     const json = JSON.parse(raw);
 
-    // Sanitização mínima para campos esperados
     const payload = {
-      titulo: json.titulo ?? "Diagnóstico Inteligente Soo Tech",
-      subtitulo: json.subtitulo ?? "Avaliação consultiva orientada a impacto com IA.",
       oportunidade: json.oportunidade ?? { titulo: "Oportunidade Tecnológica", descricao: "" },
       beneficios: Array.isArray(json.beneficios) ? json.beneficios.slice(0, 4) : [],
       kpis: Array.isArray(json.kpis) ? json.kpis.slice(0, 4) : [],
       impacto: json.impacto ?? { receita: 3, eficiencia: 3, retencao: 3 },
-      mvp: Array.isArray(json.mvp) ? json.mvp.slice(0, 4) : [],
-      riscos: Array.isArray(json.riscos) ? json.riscos.slice(0, 4) : [],
+      mvp: Array.isArray(json.mvp) ? json.mvp.slice(0, 3) : [],
+      riscos: Array.isArray(json.riscos) ? json.riscos.slice(0, 3) : [],
       fechamento: json.fechamento ?? "",
-      cta_whatsapp: json.cta_whatsapp ?? "https://wa.me/5511970561448?text=Quero%20um%20diagn%C3%B3stico%20de%20IA%20para%20minha%20empresa"
+      cta_whatsapp:
+        json.cta_whatsapp ??
+        "https://wa.me/5511970561448?text=Quero%20um%20diagn%C3%B3stico%20de%20IA%20para%20minha%20empresa"
     };
 
     return NextResponse.json(payload);
