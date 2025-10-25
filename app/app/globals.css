@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Paleta Soo Tech */
+:root {
+  --color-bg: #0B0B0F;
+  --color-card: rgba(255,255,255,0.06);
+  --color-glass-border: rgba(255,255,255,0.15);
+  --color-text: #ffffff;
+  --color-accent: #6AF586;
+}
+
+/* Estilização global */
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: -apple-system, Inter, sans-serif;
+  padding: 0;
+  margin: 0;
+}
+
+/* Melhor visual do container principal */
+.section-container {
+  @apply max-w-5xl mx-auto px-6 md:px-10;
+}
