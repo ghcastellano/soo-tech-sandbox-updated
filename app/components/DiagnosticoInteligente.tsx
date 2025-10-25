@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import { motion } from "framer-motion";
 
@@ -14,16 +15,27 @@ export default function DiagnosticoInteligente() {
     const res = await fetch("/api/diagnostico", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ descricao, idioma: navigator.language }),
+      body: JSON.stringify({
+        descricao,
+        idioma: navigator.language
+      }),
     });
 
     const data = await res.json();
+    let jsonContent = data.content;
 
     try {
-      const parsed = JSON.parse(data.content);
+      jsonContent = jsonContent
+        .replace(/```json/g, "")
+        .replace(/```/g, "")
+        .replace(/\n/g, " ")
+        .trim();
+
+      const parsed = JSON.parse(jsonContent);
       setResultado(parsed);
-    } catch {
-      setResultado(data);
+    } catch (error) {
+      console.error("Erro ao tentar converter JSON:", error);
+      setResultado({ Erro: "Não foi possível formatar o diagnóstico." });
     }
 
     setLoading(false);
@@ -40,64 +52,11 @@ export default function DiagnosticoInteligente() {
           Diagnóstico Inteligente
         </h2>
         <p className="text-white/70 mb-8 text-lg">
-          Análise consultiva com insights estratégicos desenvolvidos pela Soo Tech.
+          Insight estratégico e acionável conectado às melhores práticas de IA, dados e engenharia.
         </p>
 
-        {/* Input para o usuário */}
         {!resultado && (
           <>
             <textarea
               className="w-full p-4 bg-white/10 rounded-xl text-white placeholder-white/30 min-h-[120px]"
-              placeholder="Conte seu desafio rapidamente. Ex: Sou uma fintech e quero reduzir inadimplência com IA..."
-              value={descricao}
-              onChange={(e) => setDescricao(e.target.value)}
-            />
-
-            <button
-              onClick={gerarDiagnostico}
-              disabled={loading}
-              className="mt-4 w-full bg-green-500 hover:bg-green-600 text-black font-semibold py-3 rounded-xl transition"
-            >
-              {loading ? "Analisando..." : "Gerar Diagnóstico"}
-            </button>
-          </>
-        )}
-
-        {/* Loading */}
-        {loading && (
-          <motion.div
-            animate={{ opacity: [0.4, 1, 0.4] }}
-            transition={{ repeat: Infinity, duration: 1.2 }}
-            className="text-center text-white/70 mt-6"
-          >
-            Consultores analisando seu case...
-          </motion.div>
-        )}
-
-        {/* Resultado Renderizado e Formatado */}
-        {resultado && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-white flex flex-col gap-8 mt-10"
-          >
-            {Object.entries(resultado).map(([titulo, texto]: any, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                className="bg-white/10 p-6 rounded-2xl border border-white/10"
-              >
-                <h3 className="text-2xl font-bold text-green-400 mb-3">
-                  {titulo.replace(/_/g, " ")}
-                </h3>
-                <p className="text-white/80 leading-relaxed">
-                  {texto}
-                </p>
-              </motion.div>
-            ))}
-
-            <a
-              href="https://wa.me/5511970561448?text=Olá! Quero implementar essa estratégia com a Soo Tech."
-              className="text-c
+              placeholder="Ex: Somos uma HealthTech e queremos usar IA para re
