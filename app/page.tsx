@@ -1,5 +1,5 @@
 "use client";
-import DiagnosticoInteligente from "@/app/components/DiagnosticoInteligente";
+import DiagnosticoInteligente from "./components/DiagnosticoInteligente";
 
 export default function Page() {
   return (
