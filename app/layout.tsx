@@ -2,7 +2,7 @@ import "./globals.css";
 
 export const metadata = {
   title: "Soo Tech | Diagnóstico IA Disruptivo",
-  description: "Componente de diagnóstico inteligente para produtos com IA, dados e analytics."
+  description: "Componente de diagnóstico inteligente para produtos com IA, dados e analytics ."
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
