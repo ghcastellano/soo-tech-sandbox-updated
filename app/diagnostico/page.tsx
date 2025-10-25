@@ -15,7 +15,7 @@ export default function Page() {
             Diagnóstico IA Disruptivo
           </h1>
           <p className="text-white/70 mt-3 text-lg md:text-xl">
-            Insights estratégicos acionáveis, com linguagem executiva e foco em impacto de negócio.
+            Insights estratégicos acionáveis, com linguagem executiva e foco em impacto de negócio. 
           </p>
         </header>
 
