@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
+
+  // Headers obrigatórios para embed do Framer + domínio SooTech
   async headers() {
     return [
       {
@@ -8,7 +11,7 @@ const nextConfig = {
           {
             key: "Content-Security-Policy",
             value:
-              "frame-ancestors 'self' https://sootech.io https://framer.com https://*.framer.app;"
+              "frame-ancestors 'self' https://sootech.io https://www.sootech.io https://framer.com https://*.framer.app;"
           },
           {
             key: "X-Frame-Options",
@@ -20,8 +23,8 @@ const nextConfig = {
           }
         ]
       }
-    ]
+    ];
   }
-}
+};
 
-module.exports = nextConfig
+export default nextConfig;
