@@ -14,9 +14,9 @@ export default function DiagnosticoInteligente() {
       method: "POST",
       body: JSON.stringify({
         descricao,
-        idioma: navigator.language
+        idioma: navigator.language,
       }),
-      headers: { "Content-Type": "application/json" }
+      headers: { "Content-Type": "application/json" },
     });
 
     const reader = res.body!.getReader();
@@ -31,7 +31,8 @@ export default function DiagnosticoInteligente() {
 
     try {
       setResultado(JSON.parse(text));
-    } catch {
+    } catch (e) {
+      console.error("Erro no JSON:", text);
       setResultado({ error: "Erro ao interpretar JSON" });
     }
 
@@ -39,62 +40,56 @@ export default function DiagnosticoInteligente() {
   }
 
   return (
-    <div id="diagnostico-inteligente"
+    <div
+      id="diagnostico-inteligente"
       className="
-      w-full max-w-5xl mx-auto
+      w-full max-w-4xl mx-auto
       backdrop-blur-xl bg-white/10
       border border-white/20
       shadow-[0_0_40px_rgba(255,255,255,0.06)]
-      rounded-3xl p-10 md:p-14
-      flex flex-col gap-8
+      rounded-3xl p-10
+      text-white
       "
     >
-      <h2 className="text-2xl md:text-3xl font-bold text-white">
+      <h2 className="text-3xl font-bold mb-2">
         Diagnóstico Inteligente Soo Tech
       </h2>
-      <p className="text-white/80">
+      <p className="text-white/80 mb-6">
         Blueprint Estratégico de IA criado para acelerar seus resultados em minutos.
       </p>
 
       {!resultado && !loading && (
-        <div className="flex gap-4">
-          <button
-            className="px-6 py-3 rounded-xl bg-white/20 text-white hover:bg-white/30 transition-all"
-            onClick={() => gerarDiagnostico("Sou uma empresa e quero aplicar IA nos meus processos")}
-          >
-            Gerar Diagnóstico
-          </button>
-        </div>
+        <button
+          onClick={() =>
+            gerarDiagnostico("Quero aplicar IA e automação no meu negócio")
+          }
+          className="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-xl"
+        >
+          Gerar Diagnóstico
+        </button>
       )}
 
-      {loading && (
-        <p className="text-white/60 animate-pulse">Gerando diagnóstico…</p>
-      )}
+      {loading && <p className="animate-pulse">Gerando…</p>}
 
       <AnimatePresence>
-        {resultado && (
+        {resultado && !loading && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
             className="flex flex-col gap-6"
           >
             {resultado.headline && (
-              <h3 className="text-xl text-white font-semibold">
+              <h3 className="text-xl font-semibold">
                 {resultado.headline}
               </h3>
             )}
 
             {resultado.beneficios && (
               <section>
-                <h4 className="text-white font-semibold mb-2">
-                  Benefícios Esperados
-                </h4>
-                <ul className="grid gap-2">
+                <h4 className="font-semibold mb-1">Benefícios</h4>
+                <ul className="text-white/80">
                   {resultado.beneficios.map((b: any, i: number) => (
-                    <li key={i} className="text-white/90">
-                      • {b.titulo}: {b.valor}
-                    </li>
+                    <li key={i}>• {b.titulo}: {b.valor}</li>
                   ))}
                 </ul>
               </section>
@@ -102,9 +97,7 @@ export default function DiagnosticoInteligente() {
 
             {resultado.impact_score_1a5 && (
               <section>
-                <h4 className="text-white font-semibold mb-1">
-                  Impact Score
-                </h4>
+                <h4 className="font-semibold mb-1">Impacto Esperado</h4>
                 <div className="text-yellow-400 text-lg">
                   {"⭐".repeat(resultado.impact_score_1a5)}
                 </div>
@@ -113,11 +106,11 @@ export default function DiagnosticoInteligente() {
 
             {resultado.arquitetura && (
               <section>
-                <h4 className="text-white font-semibold mb-1">
-                  Arquitetura Sugerida
+                <h4 className="font-semibold mb-1">
+                  Arquitetura Recomendada
                 </h4>
                 <p className="text-white/80">{resultado.arquitetura.visao}</p>
-                <ul className="text-white/60 mt-1">
+                <ul className="text-white/60">
                   {resultado.arquitetura.componentes.map((c: string, i: number) => (
                     <li key={i}>• {c}</li>
                   ))}
@@ -127,7 +120,7 @@ export default function DiagnosticoInteligente() {
 
             {resultado.kpis && (
               <section>
-                <h4 className="text-white font-semibold mb-1">KPIs</h4>
+                <h4 className="font-semibold mb-1">KPIs</h4>
                 <ul className="text-white/80">
                   {resultado.kpis.map((k: string, i: number) => (
                     <li key={i}>• {k}</li>
@@ -136,11 +129,10 @@ export default function DiagnosticoInteligente() {
               </section>
             )}
 
+            {/* CTA */}
             <a
               href="https://wa.me/5511970561448?text=Olá! Quero uma avaliação estratégica da Soo Tech."
-              target="_blank"
-              className="px-6 py-3 rounded-xl bg-green-500 text-white
-              hover:bg-green-600 transition-all mt-4 inline-block text-center"
+              className="px-6 py-3 bg-green-500 hover:bg-green-600 rounded-xl inline-block text-center"
             >
               Falar com Especialista no WhatsApp
             </a>
