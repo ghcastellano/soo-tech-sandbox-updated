@@ -31,24 +31,23 @@ export default function DiagnosticoInteligente() {
 
     try {
       setResultado(JSON.parse(text));
-    } catch (e) {
-      console.error("Erro no JSON:", text);
-      setResultado({ error: "Erro ao interpretar JSON" });
+    } catch {
+      setResultado({ error: "Erro ao interpretar o JSON gerado." });
     }
 
     setLoading(false);
   }
 
   return (
-    <div
+    <section
       id="diagnostico-inteligente"
       className="
-      w-full max-w-4xl mx-auto
-      backdrop-blur-xl bg-white/10
-      border border-white/20
-      shadow-[0_0_40px_rgba(255,255,255,0.06)]
-      rounded-3xl p-10
-      text-white
+        w-full max-w-4xl mx-auto
+        backdrop-blur-xl bg-white/10
+        border border-white/20
+        shadow-[0_0_40px_rgba(255,255,255,0.06)]
+        rounded-3xl p-10
+        text-white
       "
     >
       <h2 className="text-3xl font-bold mb-2">
@@ -61,7 +60,7 @@ export default function DiagnosticoInteligente() {
       {!resultado && !loading && (
         <button
           onClick={() =>
-            gerarDiagnostico("Quero aplicar IA e automação no meu negócio")
+            gerarDiagnostico("Quero aplicar IA nos meus processos.")
           }
           className="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-xl"
         >
@@ -79,9 +78,7 @@ export default function DiagnosticoInteligente() {
             className="flex flex-col gap-6"
           >
             {resultado.headline && (
-              <h3 className="text-xl font-semibold">
-                {resultado.headline}
-              </h3>
+              <h3 className="text-xl font-semibold">{resultado.headline}</h3>
             )}
 
             {resultado.beneficios && (
@@ -106,9 +103,7 @@ export default function DiagnosticoInteligente() {
 
             {resultado.arquitetura && (
               <section>
-                <h4 className="font-semibold mb-1">
-                  Arquitetura Recomendada
-                </h4>
+                <h4 className="font-semibold mb-1">Arquitetura Recomendada</h4>
                 <p className="text-white/80">{resultado.arquitetura.visao}</p>
                 <ul className="text-white/60">
                   {resultado.arquitetura.componentes.map((c: string, i: number) => (
@@ -129,7 +124,6 @@ export default function DiagnosticoInteligente() {
               </section>
             )}
 
-            {/* CTA */}
             <a
               href="https://wa.me/5511970561448?text=Olá! Quero uma avaliação estratégica da Soo Tech."
               className="px-6 py-3 bg-green-500 hover:bg-green-600 rounded-xl inline-block text-center"
@@ -139,6 +133,6 @@ export default function DiagnosticoInteligente() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </section>
   );
 }
