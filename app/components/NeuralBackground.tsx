@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 
 /**
- * Canvas/WebGL com shader de ruído + deformação temporal.
+ * Canvas/WebGL com shader de ruído + deformação temporal  .
  * Estilo N1 (neural orgânico), ritmo R2 (moderado), opacidade baixa para não competir com o conteúdo.
  */
 export default function NeuralBackground() {
