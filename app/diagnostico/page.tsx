@@ -1,8 +1,8 @@
 
 "use client";
 
-import NeuralBackground from "@/components/NeuralBackground";
-import DiagnosticoInteligente from "@/components/DiagnosticoInteligente";
+import { DiagnosticoInteligente, NeuralBackground } from "@/components";
+
 
 export default function Page() {
   return (
