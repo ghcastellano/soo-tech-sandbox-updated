@@ -3,63 +3,50 @@ import OpenAI from "openai";
 
 export const runtime = "edge";
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 
 export async function POST(req: NextRequest) {
-  const { descricao, idioma } = await req.json();
+  try {
+    const { descricao, idioma } = await req.json();
 
-  const systemPrompt = `
-Você é consultor sênior da Soo Tech.
-
-VOCÊ DEVE devolver **exatamente este JSON**:
-
+    const system = `
+Você é consultor sênior da Soo Tech. ENTREGUE APENAS JSON VÁLIDO no idioma: ${idioma}.
+Formato OBRIGATÓRIO:
 {
   "Oportunidade Tecnológica": {
-    "descricao": "explicar o contexto",
-    "beneficios": [
-      "beneficio claro 1",
-      "beneficio claro 2"
-    ]
+    "descricao": "1 parágrafo claro e objetivo",
+    "beneficios": ["bullet 1", "bullet 2", "bullet 3"]
   },
   "Ganhos de Negócio": {
-    "descricao": "descrever o impacto nos KPIs",
-    "impacto": {
-      "Receita": 1-5,
-      "Eficiência": 1-5,
-      "Retenção": 1-5
-    }
+    "descricao": "1 parágrafo focado em KPIs",
+    "impacto": { "Receita": 1-5, "Eficiência": 1-5, "Retenção": 1-5 }
   },
-  "Caminho rápido ao MVP": [
-    "passo 1",
-    "passo 2",
-    "passo 3"
-  ],
-  "Riscos e Barreiras": "texto curto e objetivo",
-  "Diferenciais Soo Tech": [
-    "diferencial 1",
-    "diferencial 2"
-  ]
+  "Caminho rápido ao MVP": ["passo 1", "passo 2", "passo 3"],
+  "Riscos e Barreiras": "texto curto e honesto",
+  "Diferenciais Soo Tech": ["diferencial 1", "diferencial 2", "diferencial 3"]
 }
-
-REQUISITOS:
-- Apenas JSON válido
-- Sem \`\`\`json ou \`\`\`
-- Sem texto fora do JSON
-- Idioma conforme: ${idioma}
+Sem \`\`\`, sem comentários, sem texto fora do JSON.
 `;
 
-  const completion = await client.chat.completions.create({
-    model: "gpt-4.1",
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: descricao },
-    ],
-    temperature: 0.3
-  });
+    const completion = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0.3,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: String(descricao ?? "") }
+      ]
+    });
 
-  return new Response(JSON.stringify(completion.choices[0].message), {
-    headers: { "Content-Type": "application/json" }
-  });
+    const content = completion.choices[0]?.message?.content ?? "{}";
+
+    return new Response(
+      JSON.stringify({ content }),
+      { headers: { "Content-Type": "application/json" } }
+    );
+  } catch (err: any) {
+    return new Response(
+      JSON.stringify({ error: "Falha ao gerar diagnóstico.", details: err?.message }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
 }
