@@ -1,11 +1,15 @@
 "use client";
-import { useState } from "react";
-import DiagnosticoInteligente from "@/components/DiagnosticoInteligente";
+
+import { useState, useRef } from "react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 export default function Home() {
   const [descricao, setDescricao] = useState("");
   const [loading, setLoading] = useState(false);
   const [resultado, setResultado] = useState("");
+
+  const resultadoRef = useRef<HTMLDivElement | null>(null);
 
   async function gerar() {
     if (!descricao.trim()) return;
@@ -16,16 +20,15 @@ export default function Home() {
       const res = await fetch("/api/diagnostico", {
         method: "POST",
         body: JSON.stringify({ descricao }),
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json" },
       });
 
       const reader = res.body!.getReader();
       const decoder = new TextDecoder();
-
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        setResultado(prev => prev + decoder.decode(value));
+        setResultado((prev) => prev + decoder.decode(value));
       }
     } catch (error) {
       console.error(error);
@@ -34,8 +37,34 @@ export default function Home() {
     setLoading(false);
   }
 
+  async function exportarPDF() {
+    if (!resultadoRef.current) return;
+
+    const canvas = await html2canvas(resultadoRef.current, {
+      scale: 2,
+      backgroundColor: "#0E1117",
+    });
+
+    const pdf = new jsPDF("p", "mm", "a4");
+    const imgData = canvas.toDataURL("image/png");
+
+    const pdfWidth = 210;
+    const imgProps = {
+      ratio: canvas.width / canvas.height,
+    };
+
+    const pdfHeight = pdfWidth / imgProps.ratio;
+    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+
+    const filename = `Diagnostico-SooTech-${new Date()
+      .toISOString()
+      .replace(/[:.]/g, "-")}.pdf`;
+
+    pdf.save(filename);
+  }
+
   return (
-    <main className="min-h-screen bg-[#0E1117] text-white flex flex-col items-center justify-center px-4">
+    <main className="min-h-screen bg-[#0E1117] text-white flex flex-col items-center justify-center p-6">
       <div className="max-w-4xl w-full text-center mb-10">
         <h1 className="text-4xl md:text-5xl font-bold">
           Diagnóstico Inteligente Soo Tech com IA
@@ -56,8 +85,7 @@ export default function Home() {
         <button
           onClick={gerar}
           disabled={loading}
-          className="mt-6 w-full py-4 rounded-xl text-xl font-semibold bg-green-500 text-black 
-                     hover:bg-green-400 disabled:bg-gray-700 disabled:text-gray-400 transition-all"
+          className="mt-6 w-full py-4 rounded-xl text-xl font-semibold bg-green-500 text-black hover:bg-green-400 disabled:bg-gray-700 disabled:text-gray-400 transition-all"
         >
           {loading ? "Gerando Diagnóstico…" : "Gerar Diagnóstico IA"}
         </button>
@@ -69,8 +97,20 @@ export default function Home() {
         )}
 
         {resultado && (
-          <div className="mt-8 bg-black/20 p-6 rounded-lg border border-gray-700 text-left whitespace-pre-wrap">
-            {resultado}
+          <div>
+            <div
+              ref={resultadoRef}
+              className="mt-8 bg-black/20 p-6 rounded-lg border border-gray-700 text-left whitespace-pre-wrap"
+            >
+              {resultado}
+            </div>
+
+            <button
+              onClick={exportarPDF}
+              className="mt-4 w-full py-3 text-lg rounded-lg font-semibold bg-green-500 hover:bg-green-400 text-black"
+            >
+              📄 Exportar Diagnóstico em PDF
+            </button>
           </div>
         )}
       </div>
