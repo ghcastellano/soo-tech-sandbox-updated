@@ -1,9 +1,9 @@
-// app/api/diagnostico/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
 export const runtime = "edge";
 
+// CORS handler
 function cors(response: NextResponse) {
   response.headers.set("Access-Control-Allow-Origin", "*");
   response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -26,26 +26,37 @@ export async function POST(req: NextRequest) {
 
     const prompt = `
 Você é um consultor sênior da Soo Tech. Gere uma análise estratégica com IA.
-Responda em JSON válido com:
+Responda com JSON:
 {
 "Oportunidade Tecnológica": "...",
-"Ganhos de Negócio": [...],
+"Ganhos de Negócio": ["..."],
 "Impact Score": { "Receita":1-5, "Eficiência":1-5, "Retenção":1-5 },
-"Riscos e Barreiras": [...],
-"Diferenciais Soo Tech": [...],
-"Próximos Passos": [...]
+"Riscos e Barreiras": ["..."],
+"Diferenciais Soo Tech": ["..."],
+"Próximos Passos": ["..."]
 }
 Descrição do cliente: """${desc}"""
-    `;
+`;
 
-    const response = await openai.responses.create({
-      model: "gpt-4.1-mini",
-      input: prompt
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: "Você é um consultor sênior da Soo Tech e responde sempre em JSON válido." },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.3
     });
 
-    const content = response.output[0].content[0].text;
-    return cors(NextResponse.json(JSON.parse(content)));
+    const txt = completion.choices[0].message.content;
+    const json = JSON.parse(txt);
+
+    return cors(NextResponse.json(json));
   } catch (e) {
-    return cors(NextResponse.json({ error: "Erro ao gerar diagnóstico" }, { status: 500 }));
+    return cors(
+      NextResponse.json(
+        { error: "Erro ao gerar diagnóstico" },
+        { status: 500 }
+      )
+    );
   }
 }
