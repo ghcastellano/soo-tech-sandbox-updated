@@ -4,11 +4,9 @@ module.exports = {
   mode: "jit",
   darkMode: "class",
   content: [
-    "./app/**/*.tsx",
-    "./components/**/*.tsx",
-    "./pages/**/*.tsx",
-    "./src/**/*.tsx",
-  ],
+  "./app/**/*.{js,ts,jsx,tsx}",
+  "./components/**/*.{js,ts,jsx,tsx}"
+],
   theme: {
     extend: {
       colors: {
