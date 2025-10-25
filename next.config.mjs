@@ -3,7 +3,7 @@ const nextConfig = {
   async headers() {
     return [
       {
-        // Aplica esta regra a todas as rotas
+        // Aplica esta regra a todas as rota 
         source: '/:path*',
         headers: [
           {
