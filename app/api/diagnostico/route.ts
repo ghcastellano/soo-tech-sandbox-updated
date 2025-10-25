@@ -25,7 +25,7 @@ Formato OBRIGATÓRIO:
   "Riscos e Barreiras": "texto curto e honesto",
   "Diferenciais Soo Tech": ["diferencial 1", "diferencial 2", "diferencial 3"]
 }
-Sem \`\`\`, sem comentários, sem texto fora do JSON.
+Sem \`\`\`, sem comentários , sem texto fora do JSON.
 `;
 
     const completion = await client.chat.completions.create({
