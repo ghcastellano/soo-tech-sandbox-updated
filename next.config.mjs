@@ -3,25 +3,25 @@ const nextConfig = {
   async headers() {
     return [
       {
-        // Aplica esta regra a todas as rota 
-        source: '/:path*',
+        source: "/(.*)",
         headers: [
           {
-            key: 'Content-Security-Policy',
-            
-            // ISTO PERMITE:
-            // 'self': O próprio app Vercel
-            // 'https://framer.com': O editor do Framer
-            // 'https://*.framer.app': Seu site publicado no Framer (como o sincere-english-...)
-            // 'https://*.framer.website': Outro domínio de publicação do Framer
-            
+            key: "Content-Security-Policy",
             value:
-              "frame-ancestors 'self' https://framer.com https://*.framer.app https://*.framer.website;",
+              "frame-ancestors 'self' https://sootech.io https://framer.com https://*.framer.app;"
           },
-        ],
-      },
-    ];
-  },
-};
+          {
+            key: "X-Frame-Options",
+            value: "ALLOW-FROM https://framer.com"
+          },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin"
+          }
+        ]
+      }
+    ]
+  }
+}
 
-export default nextConfig;
+module.exports = nextConfig
