@@ -10,28 +10,44 @@ const client = new OpenAI({
 export async function POST(req: NextRequest) {
   const { descricao, idioma } = await req.json();
 
-  const systemPrompt = `Você é um especialista sênior em transformação digital e IA
-com foco em resultados financeiros tangíveis.
+  const systemPrompt = `
+Você é consultor sênior da Soo Tech.
 
-Sua missão:
-Gerar um diagnóstico essencial e altamente profissional
-com estas seções:
+VOCÊ DEVE devolver **exatamente este JSON**:
 
-1. Oportunidade Tecnológica 🧠 
-2. Ganhos de Negócio 💹
-3. Caminho Rápido até a Prova de Valor 🚀
-4. Riscos e Barreiras ⚠️
-5. Nossos Diferenciais Soo Tech ✅
-6. Impact Score ★★★★★
+{
+  "Oportunidade Tecnológica": {
+    "descricao": "explicar o contexto",
+    "beneficios": [
+      "beneficio claro 1",
+      "beneficio claro 2"
+    ]
+  },
+  "Ganhos de Negócio": {
+    "descricao": "descrever o impacto nos KPIs",
+    "impacto": {
+      "Receita": 1-5,
+      "Eficiência": 1-5,
+      "Retenção": 1-5
+    }
+  },
+  "Caminho rápido ao MVP": [
+    "passo 1",
+    "passo 2",
+    "passo 3"
+  ],
+  "Riscos e Barreiras": "texto curto e objetivo",
+  "Diferenciais Soo Tech": [
+    "diferencial 1",
+    "diferencial 2"
+  ]
+}
 
-Sobre a Soo Tech:
-Consultoria premium em criação de produtos com IA, dados e engenharia.
-Alocamos especialistas e entregamos produtos completos.
-Referência em performance e impacto real.
-
-Saída: JSON estruturado.
-Nunca diga que é IA. Sempre comunique como consultoria.
-Idioma: ${idioma}
+REQUISITOS:
+- Apenas JSON válido
+- Sem \`\`\`json ou \`\`\`
+- Sem texto fora do JSON
+- Idioma conforme: ${idioma}
 `;
 
   const completion = await client.chat.completions.create({
@@ -40,11 +56,10 @@ Idioma: ${idioma}
       { role: "system", content: systemPrompt },
       { role: "user", content: descricao },
     ],
+    temperature: 0.3
   });
 
   return new Response(JSON.stringify(completion.choices[0].message), {
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" }
   });
 }
