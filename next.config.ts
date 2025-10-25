@@ -8,20 +8,20 @@ const nextConfig = {
           {
             key: "Content-Security-Policy",
             value:
-              "frame-ancestors https://framer.com https://*.framer.app 'self';",
+              "frame-ancestors 'self' https://sootech.io https://framer.com https://*.framer.app;"
           },
           {
             key: "X-Frame-Options",
-            value: "ALLOW-FROM https://framer.com",
+            value: "ALLOW-FROM https://framer.com"
           },
           {
-            key: "Access-Control-Allow-Origin",
-            value: "https://framer.com https://*.framer.app *",
-          },
-        ],
-      },
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin"
+          }
+        ]
+      }
     ]
-  },
+  }
 }
 
 module.exports = nextConfig
