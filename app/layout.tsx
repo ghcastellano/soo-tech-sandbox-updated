@@ -1,14 +1,14 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Soo Tech – Diagnóstico Inteligente",
-  description: "Consultoria Tech impulsionada por IA.",
+  title: "Soo Tech | Diagnóstico IA Disruptivo",
+  description: "Criação de produtos com IA que transformam negócios.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR">
-      <body className="bg-[var(--color-bg)] text-[var(--color-text)]">
+    <html lang="pt-BR" suppressHydrationWarning>
+      <body className="bg-dark text-white antialiased">
         {children}
       </body>
     </html>
