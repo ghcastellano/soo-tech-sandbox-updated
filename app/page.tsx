@@ -1,71 +1,84 @@
 "use client";
-
 import { useState } from "react";
 
 export default function Home() {
-  const [prompt, setPrompt] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [resultado, setResultado] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
 
-  async function gerarDiagnostico() {
-    if (!prompt) return;
+  async function gerar() {
+    if (!descricao.trim()) return;
+
     setLoading(true);
-    setResult(null);
+    setResultado("");
 
     try {
-      const response = await fetch("/api/diagnostico", {
+      const res = await fetch("/api/diagnostico", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ descricao })
       });
 
-      const data = await response.json();
-      setResult(data);
-    } catch (error) {
-      console.error("Erro:", error);
-      setResult(null);
+      const data = await res.json();
+      setResultado(data.resultado || "Não foi possível gerar o diagnóstico.");
+    } catch {
+      setResultado("Erro ao consultar análise.");
     }
 
     setLoading(false);
   }
 
-  return (
-    <main className="min-h-screen bg-black text-white flex justify-center items-center px-4 py-10">
-      <div className="w-full max-w-4xl bg-[#111] p-10 rounded-3xl border border-[#1f1f1f] shadow-lg">
+  const whatsapp = `https://wa.me/5511970561448?text=${encodeURIComponent(
+    "Olá! Quero ajuda com IA no meu negócio."
+  )}`;
 
-        {/* Sub-texto de orientação */}
-        <p className="text-center text-lg text-gray-300 mb-8">
-          Conte seu desafio e receba uma análise estratégica criada com IA.
+  return (
+    <main className="min-h-screen flex items-center justify-center bg-black text-white px-6">
+      <div className="max-w-xl w-full space-y-6 text-center">
+        {/* Header curto estratégico */}
+        <h1 className="text-2xl font-bold text-green-400">
+          Entenda como a IA pode acelerar seu crescimento 🚀
+        </h1>
+        <p className="text-gray-300 text-sm">
+          Conte seu desafio e receba uma análise estratégica feita por IA para aumentar
+          eficiência e resultados do seu negócio.
         </p>
 
-        <label className="block text-xl font-medium text-gray-200 mb-3">
-          Descreva seu desafio de negócio
-        </label>
-
+        {/* Input */}
         <textarea
-          className="w-full p-5 rounded-xl bg-black border border-[#2f2f2f] text-lg min-h-[150px] focus:outline-none focus:ring-2 focus:ring-emerald-500"
-          placeholder="Ex.: Somos uma fintech e queremos IA para reduzir fraude sem piorar a UX..."
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
+          className="w-full h-28 p-3 rounded-md bg-zinc-900 border border-zinc-700 text-sm"
+          placeholder="Ex.: Quero automatizar atendimento para aumentar vendas"
+          value={descricao}
+          onChange={(e) => setDescricao(e.target.value)}
         />
 
+        {/* Ações */}
         <button
-          onClick={gerarDiagnostico}
+          onClick={gerar}
           disabled={loading}
-          className="w-full mt-6 bg-emerald-500 hover:bg-emerald-600 transition-all text-black font-semibold text-xl p-5 rounded-xl shadow-lg disabled:opacity-50"
+          className="w-full py-3 rounded-md bg-green-500 hover:bg-green-600 
+                     text-black font-semibold transition disabled:opacity-40"
         >
-          {loading ? "Gerando análise..." : "Gerar Diagnóstico IA 🚀"}
+          {loading ? "Gerando análise..." : "Gerar diagnóstico com IA"}
         </button>
 
-        {result && (
-          <div className="mt-10 bg-black border border-[#2f2f2f] p-6 rounded-xl text-gray-200 text-lg whitespace-pre-line">
-            {result.content}
+        {/* Resultado */}
+        {resultado && (
+          <div className="bg-zinc-900 p-4 rounded-md text-sm text-left whitespace-pre-line border border-zinc-700">
+            {resultado}
           </div>
         )}
 
-        <p className="text-center text-sm text-gray-500 mt-10">
-          Powered by Soo Tech AI ⚡
-        </p>
+        {/* CTA Consultor */}
+        {resultado && (
+          <a
+            href={whatsapp}
+            target="_blank"
+            className="block w-full py-3 rounded-md border border-green-500 text-green-400 hover:bg-green-600 hover:text-black transition font-medium"
+          >
+            Conversar com especialista ⚡️
+          </a>
+        )}
       </div>
     </main>
   );
