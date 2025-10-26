@@ -15,7 +15,7 @@ type DiagnosticoResponse = {
   disclaimers: string[];
 };
 
-const WHATSAPP = '5511970561448';
+const WHATSAPP = '5514997511039';
 
 function classNames(...c: (string | false | null | undefined)[]) {
   return c.filter(Boolean).join(' ');
