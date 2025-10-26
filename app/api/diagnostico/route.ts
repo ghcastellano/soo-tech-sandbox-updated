@@ -3,14 +3,15 @@ import OpenAI from "openai";
 
 export const runtime = "edge";
 
-// Variáveis de ambiente: crie em Vercel: Settings → Environment Variables
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
 function cors() {
   return {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type"
   };
 }
 
@@ -23,39 +24,46 @@ export async function POST(req: NextRequest) {
     const { descricao } = await req.json();
 
     const prompt = `
-    Você é um consultor da Soo Tech, especialista em IA e resultado financeiro.
-    Gere uma análise estratégica com:
+Você é um consultor sênior da Soo Tech, com foco em IA aplicada a crescimento e eficiência.
+Gere um diagnóstico objetivo e técnico com profundidade, em PT-BR, para o caso:
+"${descricao}"
 
-    • Impact Score: 1–5 ⭐ (com 5 estrelas reais)
-    • Ganhos possíveis (ex: +18% receita / –22% custo)
-    • Barreiras e riscos
-    • Roadmap de implementação com 3 etapas
-    • Benchmark e case real no mundo com inovação disruptiva
-    • Como a Soo Tech ajuda nisso (breve)
-    • CTA final para falar com especialista
+Saída esperada, nesta ordem:
 
-    Negócio: ${descricao}
-    Idioma: Português do Brasil
-    Estrutura em bullet points.
-    Texto com profundidade e números realistas.
-    `;
+1) Impact Score (⭐ 1–5): use 5 estrelas reais no texto se for muito promissor.
+2) Ganhos de Negócio (com números realistas):
+   - receita (+x% a +y%), margem (+x p.p.), CAC (–x%), churn (–x p.p.), lead time (–x%)
+   - ROI aproximado (payback em n meses) e um mini-cálculo ilustrativo
+3) Riscos e Barreiras:
+   - dados, integração, privacidade, readiness do time, change management
+   - mitigação recomendada
+4) Roadmap em 3 etapas:
+   - 0–30 dias (MVP mensurável), 30–90 dias (escala inicial), 90–180 dias (produtização)
+5) Benchmark/Case real no mundo:
+   - cite 1 referência plausível e tática inovadora aplicada ao contexto
+6) Diferenciais da Soo Tech:
+   - como aceleramos a captura de valor e reduzimos risco
+7) Fecho com CTA breve para continuar com um especialista.
 
-    let response;
+Use bullets concisos, números, e linguagem executiva.
+`;
+
+    let resp;
     try {
-      response = await client.responses.create({
+      resp = await client.responses.create({
         model: "o1-mini",
-        input: prompt,
+        input: prompt
       });
     } catch {
-      response = await client.responses.create({
+      resp = await client.responses.create({
         model: "gpt-4.1-mini",
-        input: prompt,
+        input: prompt
       });
     }
 
-    const text = response.output_text ?? "Erro ao gerar diagnóstico.";
-    return new NextResponse(text, { headers: cors() });
-  } catch (e) {
-    return new NextResponse("Erro ao processar requisição", { status: 500, headers: cors() });
+    const text = resp.output_text ?? "Não foi possível gerar o diagnóstico neste momento.";
+    return new NextResponse(text, { status: 200, headers: cors() });
+  } catch {
+    return new NextResponse("Erro ao processar o diagnóstico.", { status: 500, headers: cors() });
   }
 }
