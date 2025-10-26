@@ -116,47 +116,74 @@ export default function Home() {
             )}
 
             {/* Resultado */}
-            <AnimatePresence>
-              {resultado && !loading && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-8 space-y-6"
-                >
-                  {/* Chips rápidos de valor */}
-                  <div className="flex flex-wrap gap-2">
-                    <span className="px-3 py-1 rounded-full bg-emerald-400/10 border border-emerald-400/30 text-emerald-300 text-sm">
-                      Impacto esperado ⭐⭐⭐⭐⭐
-                    </span>
-                    <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-200 text-sm">
-                      ROI aproximado incluso
-                    </span>
-                    <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-200 text-sm">
-                      Roadmap 0–180 dias
-                    </span>
-                  </div>
+            {/* Resultado aprimorado */}
+<AnimatePresence>
+  {resultado && !loading && (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mt-10 space-y-8 text-[17px] leading-relaxed tracking-wide text-[#E6E6E6] font-normal"
+      style={{ fontFamily: "Manrope, sans-serif" }}
+    >
+      {/* Chips superiores */}
+      <div className="flex flex-wrap gap-2">
+        <span className="px-3 py-1 rounded-full bg-emerald-400/10 border border-emerald-400/40 text-emerald-300 text-sm">
+          ⭐ Impacto Estratégico
+        </span>
+        <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-200 text-sm">
+          ROI estimado incluso
+        </span>
+        <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-200 text-sm">
+          Roadmap 0–180 dias
+        </span>
+      </div>
 
-                  {/* Corpo do diagnóstico */}
-                  <div className="whitespace-pre-wrap text-gray-100 leading-relaxed">
-                    {resultado}
-                  </div>
+      {/* Conteúdo segmentado */}
+      <div className="space-y-8">
+        {resultado.split(/\d\)\s\*\*/).map((section, index) => {
+          if (!section.trim()) return null;
 
-                  {/* CTA WhatsApp */}
-                  <a
-                    href={`https://wa.me/5511970561448?text=Olá!%20Li%20meu%20Diagnóstico%20IA%20no%20site%20da%20Soo%20Tech%20e%20quero%20falar%20com%20um%20consultor%20especialista.`}
-                    target="_blank"
-                    className="block text-center mt-2 py-3 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-semibold transition"
-                  >
-                    Conversar com consultor especialista ⚡️
-                  </a>
+          const numero = index + 1;
+          const titulo = section.split("**")[0]?.trim();
+          const conteudo = section.replace(`${titulo}**`, "").trim();
 
-                  {/* Nota de autoridade */}
-                  <p className="text-xs text-[#AFAFAF] text-center">
-                    A Soo Tech já acelerou resultados em projetos semelhantes a este combinando IA, dados e analytics.
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
+          const tituloAjustado =
+            numero === 7
+              ? "7) Próximos passos"
+              : `${numero}) ${titulo}`;
+
+          return (
+            <div
+              key={index}
+              className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 shadow-[0_0_40px_rgba(0,255,120,0.04)]"
+            >
+              <h3 className="text-[20px] font-semibold text-white mb-3">
+                {tituloAjustado}
+              </h3>
+              <p className="whitespace-pre-wrap text-[#D4D4D4] text-[16px] leading-[1.6]">
+                {conteudo}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* CTA */}
+      <motion.a
+        href={`https://wa.me/5511970561448?text=Olá!%20Li%20meu%20Diagnóstico%20IA%20no%20site%20da%20Soo%20Tech%20e%20quero%20falar%20com%20um%20consultor.`}
+        target="_blank"
+        className="block text-center mt-4 py-4 rounded-xl bg-gradient-to-r from-emerald-400 to-emerald-300 text-black font-semibold text-[17px] hover:scale-[1.02] transition-transform"
+      >
+        Falar com um Consultor Especialista ⚡️
+      </motion.a>
+
+      <p className="text-xs text-[#AFAFAF] text-center">
+        A Soo Tech já impulsionou resultados em projetos semelhantes, unindo IA, automação e analytics com ROI rápido.
+      </p>
+    </motion.div>
+  )}
+</AnimatePresence>
+
           </div>
         </div>
       </div>
