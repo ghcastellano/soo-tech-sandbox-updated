@@ -4,116 +4,93 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 
 export default function Page() {
-  const [descricao, setDescricao] = useState<string>("");
+  const [descricao, setDescricao] = useState("");
+  const [resultado, setResultado] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [resultado, setResultado] = useState<string>("");
 
-  async function gerar() {
+  async function gerarDiagnostico() {
+    setLoading(true);
+    setResultado(null);
+
     try {
-      setLoading(true);
-      setResultado("");
-
-      const inputSanitizado = descricao.trim();
-
-      if (!inputSanitizado || inputSanitizado.length < 10) {
-        setLoading(false);
-        setResultado(
-          "Por favor, descreva seu desafio com um pouco mais de detalhes para gerarmos um diagnóstico preciso. 😊"
-        );
-        return;
-      }
-
       const res = await fetch("/api/diagnostico", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ descricao: inputSanitizado }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ descricao }),
       });
 
-      if (!res.ok) {
-        throw new Error("API_ERROR");
-      }
-
       const data = await res.json();
-
-      if (!data?.content) {
-        throw new Error("INVALID_RESPONSE");
-      }
-
       setResultado(data.content);
-    } catch (e) {
+    } catch {
       setResultado(
-        "Ops... Tivemos um imprevisto ao gerar seu diagnóstico. Nossa equipe já foi notificada e estamos cuidando disso. Tente novamente em instantes. ⚡️"
+        "Não consegui gerar agora, pode tentar novamente? ⚡️ Obrigado!"
       );
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white px-4 py-10 flex flex-col items-center">
-      
-      {/* Título */}
-      <h1 className="text-[36px] md:text-[52px] font-bold text-emerald-300 text-center">
-        Entenda como a IA pode acelerar seu crescimento 🚀
-      </h1>
-
-      {/* Subtítulo */}
-      <p className="text-[18px] text-gray-300 mt-2 text-center max-w-2xl">
-        Conte seu desafio e receba uma análise estratégica feita por IA para acelerar
-        seus resultados de negócio.
-      </p>
-
-      {/* Container do Form */}
-      <div className="bg-[#101010] mt-10 p-6 rounded-2xl shadow-xl border border-emerald-800/40 w-full max-w-3xl">
-        
-        <label className="text-[20px] text-emerald-300 font-semibold">
-          Descreva seu desafio de negócio
-        </label>
+    <main className="flex flex-col items-center justify-start min-h-screen py-10 px-4 text-gray-100 bg-black">
+      <div className="w-full max-w-4xl bg-neutral-900/60 border border-neutral-800 p-8 rounded-3xl shadow-xl backdrop-blur-md">
+        <h2 className="text-3xl font-bold mb-3 text-center text-white">
+          Entenda como a IA pode acelerar seu crescimento 🚀
+        </h2>
+        <p className="text-center text-neutral-300 mb-8">
+          Conte seu desafio e receba uma análise estratégica feita por IA para
+          acelerar seus resultados.
+        </p>
 
         <textarea
-          className="w-full bg-black/80 border border-emerald-600/30 rounded-xl p-4 mt-2 h-36 text-[18px] focus:outline-none focus:ring-2 focus:ring-emerald-400"
-          placeholder="Ex.: Somos uma empresa e queremos IA para reduzir fraudes sem piorar a UX..."
+          className="w-full h-32 bg-black/50 border border-neutral-700 rounded-xl p-4 text-neutral-200 focus:outline-none"
+          placeholder="Descreva seu desafio de negócio..."
           value={descricao}
           onChange={(e) => setDescricao(e.target.value)}
         />
 
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          onClick={gerar}
+        <button
+          onClick={gerarDiagnostico}
           disabled={loading}
-          className="w-full mt-6 py-4 bg-emerald-500 hover:bg-emerald-600 text-black font-semibold rounded-xl text-[20px]"
+          className="w-full mt-6 py-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 font-bold text-black transition shadow-md"
         >
-          {loading ? "Gerando diagnóstico..." : "Gerar Diagnóstico IA 🚀"}
-        </motion.button>
+          {loading ? "Gerando Diagnóstico..." : "Gerar Diagnóstico com IA 🚀"}
+        </button>
 
-        {/* Resultado */}
-        <div className="mt-8 whitespace-pre-line text-[18px] leading-relaxed text-gray-200">
+        <div className="mt-10">
           {loading && (
             <motion.div
-              className="text-center text-emerald-400"
-              animate={{ opacity: [0.3, 1, 0.3] }}
-              transition={{ duration: 1.2, repeat: Infinity }}
+              className="text-center text-emerald-400 font-medium"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ repeat: Infinity, duration: 1 }}
             >
-              Analisando seus dados estratégicos... 🔍⚡️
+              Processando insights estratégicos com IA... 🤖⚡️
             </motion.div>
           )}
 
-          {!loading && resultado && (
-            <div
-              dangerouslySetInnerHTML={{
-                __html: resultado,
-              }}
-            />
+          {resultado && (
+            <motion.div
+              className="mt-6 p-6 bg-black/40 border border-neutral-700 rounded-xl whitespace-pre-wrap leading-relaxed"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <div
+                className="prose prose-invert max-w-none"
+                dangerouslySetInnerHTML={{ __html: converterMarkdown(resultado) }}
+              />
+            </motion.div>
           )}
         </div>
-
-        {/* Rodapé */}
-        <p className="text-center text-gray-500 text-[14px] mt-8">
-          Powered by Soo Tech AI ⚡️
-        </p>
       </div>
-    </div>
+    </main>
   );
+}
+
+// Markdown básico -> HTML (negrito, títulos, listas)
+function converterMarkdown(md: string) {
+  return md
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/^\d+\) (.*$)/gm, "<strong>$1</strong>")
+    .replace(/- (.*$)/gm, "• $1")
+    .replace(/\n/g, "<br/>");
 }
