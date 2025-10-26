@@ -3,51 +3,59 @@ import OpenAI from "openai";
 
 export const runtime = "edge";
 
-// Carrega API KEY corretamente no ambiente do Vercel
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+// Variáveis de ambiente: crie em Vercel: Settings → Environment Variables
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Prompt com mais profundidade e CTA
-const buildPrompt = (descricao: string) => `
-Contexto: Você é um Consultor de Transformação Digital na Soo Tech.
-Objetivo: Avaliar rapidamente a oportunidade de IA para o cliente com alto valor estratégico.
+function cors() {
+  return {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  };
+}
 
-Empresa/Desafio informado:
-"${descricao}"
-
-Responda com:
-1) Oportunidades de crescimento com IA (claras e específicas)
-2) Estimativas de ganhos: receita, eficiência ou economia
-3) Barreiras e como superá-las
-4) Recomendação estratégica imediata
-5) Convite para conversar com a Soo Tech para cocriar solução (+ confiança)
-
-Formato: Parágrafos curtos e diretos.
-Idioma: O mesmo do usuário.
-Tonalidade: Consultiva, profissional e moderna.
-`;
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 200, headers: cors() });
+}
 
 export async function POST(req: NextRequest) {
   try {
     const { descricao } = await req.json();
-    if (!descricao) {
-      return NextResponse.json({ error: "Descrição obrigatória" }, { status: 400 });
+
+    const prompt = `
+    Você é um consultor da Soo Tech, especialista em IA e resultado financeiro.
+    Gere uma análise estratégica com:
+
+    • Impact Score: 1–5 ⭐ (com 5 estrelas reais)
+    • Ganhos possíveis (ex: +18% receita / –22% custo)
+    • Barreiras e riscos
+    • Roadmap de implementação com 3 etapas
+    • Benchmark e case real no mundo com inovação disruptiva
+    • Como a Soo Tech ajuda nisso (breve)
+    • CTA final para falar com especialista
+
+    Negócio: ${descricao}
+    Idioma: Português do Brasil
+    Estrutura em bullet points.
+    Texto com profundidade e números realistas.
+    `;
+
+    let response;
+    try {
+      response = await client.responses.create({
+        model: "o1-mini",
+        input: prompt,
+      });
+    } catch {
+      response = await client.responses.create({
+        model: "gpt-4.1-mini",
+        input: prompt,
+      });
     }
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "Você é um consultor de IA da Soo Tech." },
-        { role: "user", content: buildPrompt(descricao) }
-      ],
-      temperature: 0.6
-    });
-
-    const resposta = response.choices[0].message.content;
-    return NextResponse.json({ resultado: resposta });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Falha ao gerar diagnóstico" }, { status: 500 });
+    const text = response.output_text ?? "Erro ao gerar diagnóstico.";
+    return new NextResponse(text, { headers: cors() });
+  } catch (e) {
+    return new NextResponse("Erro ao processar requisição", { status: 500, headers: cors() });
   }
 }
