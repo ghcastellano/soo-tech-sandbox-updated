@@ -3,60 +3,51 @@ import OpenAI from "openai";
 
 export const runtime = "edge";
 
-// CORS handler
-function cors(response: NextResponse) {
-  response.headers.set("Access-Control-Allow-Origin", "*");
-  response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-  response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  return response;
-}
-
-export async function OPTIONS() {
-  return cors(new NextResponse(null, { status: 204 }));
-}
-
+// Carrega API KEY corretamente no ambiente do Vercel
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const desc = String(body.descricao ?? "").slice(0, 500);
+// Prompt com mais profundidade e CTA
+const buildPrompt = (descricao: string) => `
+Contexto: Você é um Consultor de Transformação Digital na Soo Tech.
+Objetivo: Avaliar rapidamente a oportunidade de IA para o cliente com alto valor estratégico.
 
-    const prompt = `
-Você é um consultor sênior da Soo Tech. Gere uma análise estratégica com IA.
-Responda com JSON:
-{
-"Oportunidade Tecnológica": "...",
-"Ganhos de Negócio": ["..."],
-"Impact Score": { "Receita":1-5, "Eficiência":1-5, "Retenção":1-5 },
-"Riscos e Barreiras": ["..."],
-"Diferenciais Soo Tech": ["..."],
-"Próximos Passos": ["..."]
-}
-Descrição do cliente: """${desc}"""
+Empresa/Desafio informado:
+"${descricao}"
+
+Responda com:
+1) Oportunidades de crescimento com IA (claras e específicas)
+2) Estimativas de ganhos: receita, eficiência ou economia
+3) Barreiras e como superá-las
+4) Recomendação estratégica imediata
+5) Convite para conversar com a Soo Tech para cocriar solução (+ confiança)
+
+Formato: Parágrafos curtos e diretos.
+Idioma: O mesmo do usuário.
+Tonalidade: Consultiva, profissional e moderna.
 `;
 
-    const completion = await openai.chat.completions.create({
+export async function POST(req: NextRequest) {
+  try {
+    const { descricao } = await req.json();
+    if (!descricao) {
+      return NextResponse.json({ error: "Descrição obrigatória" }, { status: 400 });
+    }
+
+    const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "Você é um consultor sênior da Soo Tech e responde sempre em JSON válido." },
-        { role: "user", content: prompt }
+        { role: "system", content: "Você é um consultor de IA da Soo Tech." },
+        { role: "user", content: buildPrompt(descricao) }
       ],
-      temperature: 0.3
+      temperature: 0.6
     });
 
-    const txt = completion.choices[0].message.content;
-    const json = JSON.parse(txt);
-
-    return cors(NextResponse.json(json));
-  } catch (e) {
-    return cors(
-      NextResponse.json(
-        { error: "Erro ao gerar diagnóstico" },
-        { status: 500 }
-      )
-    );
+    const resposta = response.choices[0].message.content;
+    return NextResponse.json({ resultado: resposta });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: "Falha ao gerar diagnóstico" }, { status: 500 });
   }
 }
