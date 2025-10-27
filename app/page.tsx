@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 type DiagnosticoResponse = {
   titulo: string;
-  impactoScore: number; // 1..5
+  impactoScore: number;
   ganhos: string[];
   riscos: string[];
   mitigacao: string[];
@@ -55,7 +55,7 @@ function GlassCard({
       ref={ref}
       className={classNames(
         'rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.35)]',
-        'p-6 md:p-8 transition-all duration-700',
+        'p-6 md:p-8 transition-all duration-700 overflow-visible',
         show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       )}
     >
@@ -84,7 +84,6 @@ export default function Page() {
     []
   );
 
-  // Barra de progresso suave durante o loading
   useEffect(() => {
     if (!loading) return;
     setProgress(3);
@@ -97,7 +96,6 @@ export default function Page() {
     return () => clearInterval(tick);
   }, [loading]);
 
-  // Avança mensagens do loader
   useEffect(() => {
     if (!loading) return;
     setPhase(0);
@@ -119,7 +117,6 @@ export default function Page() {
     if (t.length < 30) {
       return 'Conte um pouco mais sobre o contexto. Mínimo de 30 caracteres.';
     }
-    // Heurística simples anti-lixo: exige >= 8 letras e 3 palavras “longas”
     const letras = (t.match(/[a-zA-ZÀ-ú]/g) || []).length;
     const longas = t.split(/\s+/).filter((w) => w.length >= 5).length;
     if (letras < 8 || longas < 3) {
@@ -146,7 +143,6 @@ export default function Page() {
         body: JSON.stringify({ descricao }),
       });
 
-      // Mesmo com CORS e tratamento, garantimos UX
       if (!res.ok) {
         const msg = await res.text().catch(() => '');
         throw new Error(msg || 'Não foi possível gerar o diagnóstico agora.');
@@ -155,10 +151,8 @@ export default function Page() {
       const json: DiagnosticoResponse = await res.json();
       setData(json);
       setProgress(100);
-    } catch (e: any) {
-      setErro(
-        'Não foi possível concluir a análise agora. Já corrigimos o fluxo e você pode tentar novamente em instantes.'
-      );
+    } catch {
+      setErro('Não foi possível concluir a análise agora. Já corrigimos o fluxo e você pode tentar novamente em instantes.');
     } finally {
       setLoading(false);
     }
@@ -172,43 +166,33 @@ export default function Page() {
   }, []);
 
   return (
-    <main className="min-h-dvh w-full bg-[#0b0d0e] text-white">
-      <div className="mx-auto max-w-6xl px-4 md:px-6 py-10 md:py-14">
-        {/* Cabeçalho enxuto */}
+    <main className="min-h-dvh w-full bg-black text-white overflow-visible">
+      <div className="mx-auto max-w-6xl px-4 md:px-6 py-10 md:py-14 overflow-visible">
         <div className="mb-8 md:mb-12 text-center">
           <h1 className="text-[32px] md:text-[44px] font-semibold tracking-tight">
-            Entenda como a IA pode acelerar seu crescimento{' '}
-            <span className="align-middle">🚀</span>
+            Entenda como a IA pode acelerar seu crescimento 🚀
           </h1>
           <p className="text-white/60 mt-3 md:mt-4 text-[16px] md:text-[18px] max-w-3xl mx-auto">
             Conte seu desafio e receba uma análise estratégica feita por IA para acelerar seus resultados.
           </p>
         </div>
 
-        {/* Card principal */}
-        <div className="rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl p-5 md:p-8 shadow-[0_12px_40px_rgba(0,0,0,0.35)]">
-          {/* Sub-header do formulário (texto curto acima da textarea) */}
+        <div className="rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl p-5 md:p-8 shadow-[0_12px_40px_rgba(0,0,0,0.35)] overflow-visible">
           <div className="mb-4 md:mb-6">
             <p className="text-white/70 text-[14px] md:text-[15px]">
               Descreva seu desafio de negócio
             </p>
           </div>
 
-          {/* Textarea */}
           <textarea
             value={descricao}
             onChange={(e) => setDescricao(e.target.value)}
             placeholder="Ex.: Somos uma fintech e queremos IA para reduzir fraude sem piorar a UX..."
             rows={5}
-            className={classNames(
-              'w-full resize-none rounded-2xl bg-black/40 border border-white/10 focus:border-emerald-400/50',
-              'outline-none p-4 md:p-5 text-[16px] md:text-[18px] placeholder-white/30 text-white',
-              'shadow-inner'
-            )}
+            className="w-full resize-none rounded-2xl bg-black/40 border border-white/10 focus:border-emerald-400/50 outline-none p-4 md:p-5 text-[16px] md:text-[18px] placeholder-white/30 text-white shadow-inner"
           />
 
-          {/* Ações */}
-          <div className="mt-5 md:mt-6 flex flex-col gap-3">
+          <div className="mt-5 md:mt-6 flex flex-col gap-3 overflow-visible">
             {erro && (
               <div className="rounded-xl bg-[#2a1212] border border-[#ff3333]/30 text-[#ffbaba] px-4 py-3 text-sm">
                 {erro}
@@ -218,28 +202,26 @@ export default function Page() {
             {!loading && (
               <button
                 onClick={handleSubmit}
-                className={classNames(
-                  'rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-semibold',
-                  'text-[16px] md:text-[18px] py-4 transition-colors'
-                )}
+                className="rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-[16px] md:text-[18px] py-4 transition-colors"
               >
                 Gerar diagnóstico com IA 🚀
               </button>
             )}
 
-            {/* Loader elegante */}
             {loading && (
-              <div className="rounded-2xl bg-black/40 border border-white/10 px-4 py-5">
+              <div className="rounded-2xl bg-black/40 border border-white/10 px-4 py-5 overflow-visible">
                 <div className="flex items-center gap-3">
                   <span className="inline-block h-3 w-3 rounded-full bg-emerald-400 animate-pulse" />
                   <p className="text-white/80 text-sm md:text-[15px]">{phases[phase]}</p>
                 </div>
+
                 <div className="mt-3 h-2 w-full rounded-full bg-white/10 overflow-hidden">
                   <div
                     className="h-full bg-emerald-500 transition-all duration-300"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
+
                 <p className="mt-3 text-xs text-white/40">
                   Dica: você pode ajustar seu texto para focar no problema mais crítico, caso queira.
                 </p>
@@ -247,9 +229,8 @@ export default function Page() {
             )}
           </div>
 
-          {/* Resultado */}
           {data && !loading && (
-            <div className="mt-8 md:mt-10 grid gap-4 md:gap-6">
+            <div className="mt-8 md:mt-10 grid gap-4 md:gap-6 overflow-visible">
               <GlassCard title={data.titulo} delay={50}>
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <span className="text-white/70 text-sm">Impact Score</span>
@@ -293,8 +274,7 @@ export default function Page() {
                   ))}
                 </ol>
                 <p className="mt-3 text-xs text-white/40">
-                  Observação: o roadmap é ilustrativo e exige análise aprofundada para validação
-                  técnica e de viabilidade, pois foi gerado com suporte de IA.
+                  Observação: o roadmap é ilustrativo e exige validação técnica, pois gerado com IA.
                 </p>
               </GlassCard>
 
@@ -339,9 +319,8 @@ export default function Page() {
                 </GlassCard>
               )}
 
-              {/* Disclaimers fim */}
               {data.disclaimers?.length > 0 && (
-                <div className="rounded-2xl bg-black/40 border border-white/10 p-5">
+                <div className="rounded-2xl bg-black/40 border border-white/10 p-5 overflow-visible">
                   {data.disclaimers.map((d, i) => (
                     <p key={i} className="text-white/50 text-sm leading-relaxed">
                       {d}
@@ -353,8 +332,9 @@ export default function Page() {
           )}
         </div>
 
-        {/* Rodapé discreto */}
-        <p className="text-center text-white/40 text-sm mt-10">Powered by Soo Tech AI ⚡</p>
+        <p className="text-center text-white/40 text-sm mt-10 overflow-visible">
+          Powered by Soo Tech AI ⚡
+        </p>
       </div>
     </main>
   );
