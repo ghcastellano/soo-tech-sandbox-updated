@@ -125,6 +125,27 @@ export default function Page() {
     return null;
   }
 
+  // ✅ Auto-resize: adapta altura dinamicamente no embed do Framer
+  useEffect(() => {
+    function sendHeight() {
+      const height = document.documentElement.scrollHeight;
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: "resize", height }, "*");
+      }
+    }
+
+    sendHeight();
+
+    const obs = new MutationObserver(sendHeight);
+    obs.observe(document.body, { childList: true, subtree: true });
+
+    window.addEventListener("resize", sendHeight);
+    return () => {
+      obs.disconnect();
+      window.removeEventListener("resize", sendHeight);
+    };
+  }, [data, loading]);
+
   async function handleSubmit() {
     setErro(null);
     setData(null);
